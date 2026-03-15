@@ -104,6 +104,7 @@ export default function EntryForm() {
     try {
       const entryId = await registerEntry.mutateAsync({
         participantName: participantName.trim(),
+        email: email.trim(),
         picks: picksArray,
       });
       setSubmittedEntryId(entryId);

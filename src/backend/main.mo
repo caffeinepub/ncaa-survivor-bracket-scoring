@@ -7,9 +7,9 @@ import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
 import OutCall "http-outcalls/outcall";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   type Team = {
     id : Nat;
@@ -19,20 +19,13 @@ actor {
     points : Nat;
   };
 
-  type Game = {
-    homeTeam : Nat;
-    awayTeam : Nat;
-    homeScore : Nat;
-    awayScore : Nat;
-    round : Nat;
-    completed : Bool;
-  };
-
   type Entry = {
     participantName : Text;
-    picks : [(Nat, Nat)]; // seed -> teamId
+    email : Text;
+    picks : [(Nat, Nat)];
     totalPoints : Nat;
     activeTeams : Nat;
+    paymentConfirmed : Bool;
   };
 
   type TournamentPhase = { #registration; #inProgress; #complete };
@@ -76,7 +69,7 @@ actor {
   };
 
   // User entry management
-  public shared ({ caller }) func registerEntry(participantName : Text, picks : [(Nat, Nat)]) : async Nat {
+  public shared ({ caller }) func registerEntry(participantName : Text, email : Text, picks : [(Nat, Nat)]) : async Nat {
     if (tournamentPhase != #registration) {
       Runtime.trap("Registration is closed");
     };
@@ -87,7 +80,6 @@ actor {
 
     // Check for duplicate seeds
     let seeds = Set.empty<Nat>();
-
     for ((seed, _) in picks.values()) {
       if (seeds.contains(seed)) {
         Runtime.trap("Duplicate seed detected");
@@ -107,13 +99,36 @@ actor {
 
     let entry : Entry = {
       participantName;
+      email;
       picks;
       totalPoints = 0;
       activeTeams = 16;
+      paymentConfirmed = false;
     };
 
     entries.add(id, entry);
     id;
+  };
+
+  // Payment confirmation (admin functions)
+  public shared ({ caller }) func confirmPayment(entryId : Nat) : async () {
+    switch (entries.get(entryId)) {
+      case (null) { Runtime.trap("Entry not found") };
+      case (?entry) {
+        let updatedEntry = { entry with paymentConfirmed = true };
+        entries.add(entryId, updatedEntry);
+      };
+    };
+  };
+
+  public shared ({ caller }) func unconfirmPayment(entryId : Nat) : async () {
+    switch (entries.get(entryId)) {
+      case (null) { Runtime.trap("Entry not found") };
+      case (?entry) {
+        let updatedEntry = { entry with paymentConfirmed = false };
+        entries.add(entryId, updatedEntry);
+      };
+    };
   };
 
   // Leaderboard retrieval
@@ -135,7 +150,7 @@ actor {
     };
   };
 
-  // NCAA Teams and Scores Fetching (dummy implementation for transformation need)
+  // NCAA Teams and Scores Fetching
   public shared ({ caller }) func fetchAndSyncScores() : async Text {
     await OutCall.httpGetRequest("https://data.ncaa.com/casablanca/scoreboard/basketball-men/d1/scoreboard.json", [], transform);
   };

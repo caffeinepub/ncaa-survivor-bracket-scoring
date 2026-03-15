@@ -9,10 +9,19 @@
 import { IDL } from '@icp-sdk/core/candid';
 
 export const Entry = IDL.Record({
+  'paymentConfirmed' : IDL.Bool,
   'participantName' : IDL.Text,
   'activeTeams' : IDL.Nat,
+  'email' : IDL.Text,
   'totalPoints' : IDL.Nat,
   'picks' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat)),
+});
+export const Team = IDL.Record({
+  'id' : IDL.Nat,
+  'status' : IDL.Variant({ 'active' : IDL.Null, 'eliminated' : IDL.Null }),
+  'name' : IDL.Text,
+  'seed' : IDL.Nat,
+  'points' : IDL.Nat,
 });
 export const TournamentPhase = IDL.Variant({
   'registration' : IDL.Null,
@@ -40,6 +49,7 @@ export const TransformationOutput = IDL.Record({
 
 export const idlService = IDL.Service({
   'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
+  'confirmPayment' : IDL.Func([IDL.Nat], [], []),
   'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
   'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
   'getLeaderboard' : IDL.Func(
@@ -47,8 +57,9 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Tuple(IDL.Nat, Entry))],
       ['query'],
     ),
+  'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
   'registerEntry' : IDL.Func(
-      [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat))],
+      [IDL.Text, IDL.Text, IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat))],
       [IDL.Nat],
       [],
     ),
@@ -59,16 +70,26 @@ export const idlService = IDL.Service({
       [TransformationOutput],
       ['query'],
     ),
+  'unconfirmPayment' : IDL.Func([IDL.Nat], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
   const Entry = IDL.Record({
+    'paymentConfirmed' : IDL.Bool,
     'participantName' : IDL.Text,
     'activeTeams' : IDL.Nat,
+    'email' : IDL.Text,
     'totalPoints' : IDL.Nat,
     'picks' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat)),
+  });
+  const Team = IDL.Record({
+    'id' : IDL.Nat,
+    'status' : IDL.Variant({ 'active' : IDL.Null, 'eliminated' : IDL.Null }),
+    'name' : IDL.Text,
+    'seed' : IDL.Nat,
+    'points' : IDL.Nat,
   });
   const TournamentPhase = IDL.Variant({
     'registration' : IDL.Null,
@@ -93,6 +114,7 @@ export const idlFactory = ({ IDL }) => {
   
   return IDL.Service({
     'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
+    'confirmPayment' : IDL.Func([IDL.Nat], [], []),
     'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
     'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
     'getLeaderboard' : IDL.Func(
@@ -100,8 +122,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(IDL.Nat, Entry))],
         ['query'],
       ),
+    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
     'registerEntry' : IDL.Func(
-        [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat))],
+        [IDL.Text, IDL.Text, IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Nat))],
         [IDL.Nat],
         [],
       ),
@@ -112,6 +135,7 @@ export const idlFactory = ({ IDL }) => {
         [TransformationOutput],
         ['query'],
       ),
+    'unconfirmPayment' : IDL.Func([IDL.Nat], [], []),
   });
 };
 

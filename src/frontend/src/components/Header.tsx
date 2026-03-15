@@ -12,6 +12,7 @@ export default function Header() {
     { href: "/", label: "Home" },
     { href: "/enter", label: "Enter" },
     { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/admin", label: "Admin" },
   ];
 
   const isActive = (href: string) => {
@@ -24,7 +25,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link
+            to="/"
+            className="flex items-center gap-2 group"
+            data-ocid="nav.link"
+          >
             <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
               <Trophy className="w-5 h-5 text-navy" />
             </div>
@@ -44,6 +49,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 to={link.href}
+                data-ocid={`nav.${link.label.toLowerCase()}.link`}
                 className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
                   isActive(link.href)
                     ? "bg-gold text-navy"
@@ -79,6 +85,7 @@ export default function Header() {
               key={link.href}
               to={link.href}
               onClick={() => setMobileOpen(false)}
+              data-ocid={`nav.mobile.${link.label.toLowerCase()}.link`}
               className={`block px-4 py-2 rounded-md text-sm font-semibold transition-all ${
                 isActive(link.href)
                   ? "bg-gold text-navy"

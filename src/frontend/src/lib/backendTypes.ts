@@ -1,13 +1,4 @@
 import type { backendInterface } from "../backend";
 
-export interface BackendWithTeams extends backendInterface {
-  getTeams(): Promise<
-    Array<{
-      id: bigint;
-      name: string;
-      seed: bigint;
-      status: { active: null } | { eliminated: null };
-      points: bigint;
-    }>
-  >;
-}
+// getTeams() is now part of backendInterface directly — no extension needed.
+export type BackendWithTeams = backendInterface;

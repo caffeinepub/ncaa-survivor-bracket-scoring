@@ -11,10 +11,20 @@ import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
 export interface Entry {
+  'paymentConfirmed' : boolean,
   'participantName' : string,
   'activeTeams' : bigint,
+  'email' : string,
   'totalPoints' : bigint,
   'picks' : Array<[bigint, bigint]>,
+}
+export interface Team {
+  'id' : bigint,
+  'status' : { 'active' : null } |
+    { 'eliminated' : null },
+  'name' : string,
+  'seed' : bigint,
+  'points' : bigint,
 }
 export type TournamentPhase = { 'registration' : null } |
   { 'complete' : null } |
@@ -36,13 +46,19 @@ export interface http_request_result {
 }
 export interface _SERVICE {
   'addTeam' : ActorMethod<[string, bigint], bigint>,
+  'confirmPayment' : ActorMethod<[bigint], undefined>,
   'fetchAndSyncScores' : ActorMethod<[], string>,
   'getEntry' : ActorMethod<[bigint], Entry>,
   'getLeaderboard' : ActorMethod<[], Array<[bigint, Entry]>>,
-  'registerEntry' : ActorMethod<[string, Array<[bigint, bigint]>], bigint>,
+  'getTeams' : ActorMethod<[], Array<Team>>,
+  'registerEntry' : ActorMethod<
+    [string, string, Array<[bigint, bigint]>],
+    bigint
+  >,
   'seedTeamsFromBracket' : ActorMethod<[], bigint>,
   'setTournamentPhase' : ActorMethod<[TournamentPhase], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'unconfirmPayment' : ActorMethod<[bigint], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

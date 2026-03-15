@@ -40,13 +40,47 @@ export function useRegisterEntry() {
   return useMutation({
     mutationFn: async ({
       participantName,
+      email,
       picks,
     }: {
       participantName: string;
+      email: string;
       picks: Array<[bigint, bigint]>;
     }) => {
       if (!actor) throw new Error("Actor not ready");
-      return actor.registerEntry(participantName, picks);
+      return actor.registerEntry(participantName, email, picks);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
+// ─── Confirm Payment ─────────────────────────────────────────────────────────
+export function useConfirmPayment() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryId: bigint) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.confirmPayment(entryId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
+// ─── Unconfirm Payment ───────────────────────────────────────────────────────
+export function useUnconfirmPayment() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryId: bigint) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.unconfirmPayment(entryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });

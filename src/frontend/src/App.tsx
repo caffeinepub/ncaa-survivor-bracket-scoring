@@ -10,7 +10,6 @@ import { useEffect } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import { useActor } from "./hooks/useActor";
-import type { BackendWithTeams } from "./lib/backendTypes";
 import { getLocalTeams, setLocalTeams } from "./lib/teamStore";
 import Admin from "./pages/Admin";
 import EntryDetail from "./pages/EntryDetail";
@@ -26,7 +25,7 @@ function TeamAutoLoader() {
     const existing = getLocalTeams();
     if (existing.length > 0) return;
     // Auto-load teams from backend when localStorage is empty
-    (actor as BackendWithTeams)
+    actor
       .getTeams()
       .then((allTeams) => {
         if (allTeams.length > 0) {

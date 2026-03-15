@@ -30,6 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle,
+  DollarSign,
   Download,
   Loader2,
   Plus,
@@ -38,6 +39,7 @@ import {
   Swords,
   Trophy,
   Users,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -46,11 +48,13 @@ import SeedBadge from "../components/SeedBadge";
 import { useActor } from "../hooks/useActor";
 import {
   useAddTeam,
+  useConfirmPayment,
   useFetchAndSyncScores,
+  useLeaderboard,
   useSeedTeamsFromBracket,
   useSetTournamentPhase,
+  useUnconfirmPayment,
 } from "../hooks/useQueries";
-import type { BackendWithTeams } from "../lib/backendTypes";
 import {
   type LocalGame,
   type LocalTeam,
@@ -98,6 +102,9 @@ export default function Admin() {
   const setPhaseMutation = useSetTournamentPhase();
   const syncScoresMutation = useFetchAndSyncScores();
   const seedTeamsMutation = useSeedTeamsFromBracket();
+  const confirmPaymentMutation = useConfirmPayment();
+  const unconfirmPaymentMutation = useUnconfirmPayment();
+  const leaderboardQuery = useLeaderboard();
 
   useEffect(() => {
     setTeams(getLocalTeams());
@@ -221,7 +228,7 @@ export default function Admin() {
       }
       // After seeding, fetch all teams from backend and cache locally
       if (actor) {
-        const allTeams = await (actor as BackendWithTeams).getTeams();
+        const allTeams = await actor.getTeams();
         setLocalTeams(
           allTeams.map((t) => ({
             id: Number(t.id),
@@ -238,11 +245,35 @@ export default function Admin() {
     }
   };
 
+  const handleConfirmPayment = async (entryId: bigint, index: number) => {
+    try {
+      await confirmPaymentMutation.mutateAsync(entryId);
+      toast.success(`Entry #${index} marked as paid!`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to confirm payment";
+      toast.error(message);
+    }
+  };
+
+  const handleUnconfirmPayment = async (entryId: bigint, index: number) => {
+    try {
+      await unconfirmPaymentMutation.mutateAsync(entryId);
+      toast.success(`Entry #${index} marked as unpaid.`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to unconfirm payment";
+      toast.error(message);
+    }
+  };
+
   // Group teams by seed
   const teamsBySeed: Record<number, LocalTeam[]> = {};
   for (const seed of SEEDS) {
     teamsBySeed[seed] = teams.filter((t) => t.seed === seed);
   }
+
+  const leaderboardEntries = leaderboardQuery.data ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
@@ -281,6 +312,14 @@ export default function Admin() {
           >
             <Swords className="w-4 h-4 mr-2" />
             Games
+          </TabsTrigger>
+          <TabsTrigger
+            value="payments"
+            className="data-[state=active]:bg-gold data-[state=active]:text-navy font-bold"
+            data-ocid="admin.payments.tab"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Payments
           </TabsTrigger>
           <TabsTrigger
             value="settings"
@@ -719,6 +758,151 @@ export default function Admin() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ── Payments Tab ── */}
+        <TabsContent value="payments" className="space-y-6">
+          <Card className="bg-navy-card border-gold/20">
+            <CardHeader>
+              <CardTitle className="text-white font-black flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-gold" />
+                Payment Confirmations
+                {leaderboardEntries.length > 0 && (
+                  <span className="ml-auto text-sm font-normal text-white/40">
+                    {
+                      leaderboardEntries.filter(([, e]) => e.paymentConfirmed)
+                        .length
+                    }{" "}
+                    / {leaderboardEntries.length} paid
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription className="text-white/50">
+                Mark entries as paid once you've received their PayPal payment
+                at klandrum21@gmail.com.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {leaderboardQuery.isLoading ? (
+                <div
+                  className="flex items-center gap-3 py-8 justify-center text-white/40"
+                  data-ocid="admin.payments.loading_state"
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Loading entries…
+                </div>
+              ) : leaderboardEntries.length === 0 ? (
+                <div
+                  className="text-center py-12"
+                  data-ocid="admin.payments.empty_state"
+                >
+                  <DollarSign className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/30 font-semibold">No entries yet.</p>
+                  <p className="text-white/20 text-sm mt-1">
+                    Entries will appear here once participants register.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2" data-ocid="admin.payments.table">
+                  {leaderboardEntries.map(([entryId, entry], idx) => {
+                    const rowNum = idx + 1;
+                    const isPaid = entry.paymentConfirmed;
+                    const isBusy =
+                      (confirmPaymentMutation.isPending &&
+                        confirmPaymentMutation.variables === entryId) ||
+                      (unconfirmPaymentMutation.isPending &&
+                        unconfirmPaymentMutation.variables === entryId);
+
+                    return (
+                      <div
+                        key={entryId.toString()}
+                        className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
+                          isPaid
+                            ? "bg-emerald/5 border-emerald/20"
+                            : "bg-navy/30 border-white/10"
+                        }`}
+                      >
+                        {/* Left: info */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <span className="text-white/30 text-xs font-black w-6 shrink-0">
+                            #{rowNum}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-white font-bold text-sm truncate">
+                              {entry.participantName}
+                            </p>
+                            {entry.email && (
+                              <p className="text-white/40 text-xs truncate">
+                                {entry.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: badge + button */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          <Badge
+                            className={
+                              isPaid
+                                ? "bg-emerald/20 text-emerald border border-emerald/40 font-bold"
+                                : "bg-red-500/10 text-red-400 border border-red-500/30 font-bold"
+                            }
+                          >
+                            {isPaid ? (
+                              <>
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Paid
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Unpaid
+                              </>
+                            )}
+                          </Badge>
+
+                          {isPaid ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isBusy}
+                              onClick={() =>
+                                handleUnconfirmPayment(entryId, rowNum)
+                              }
+                              className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
+                              data-ocid={`admin.payments.confirm_button.${rowNum}`}
+                            >
+                              {isBusy ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                "Mark Unpaid"
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={isBusy}
+                              onClick={() =>
+                                handleConfirmPayment(entryId, rowNum)
+                              }
+                              className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
+                              data-ocid={`admin.payments.confirm_button.${rowNum}`}
+                            >
+                              {isBusy ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                "Mark Paid"
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ── Settings Tab ── */}
