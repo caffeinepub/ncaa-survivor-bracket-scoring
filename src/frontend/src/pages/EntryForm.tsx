@@ -145,7 +145,8 @@ export default function EntryForm() {
                 </span>
               </div>
               <p className="text-white/80 text-sm">
-                Send your entry fee via PayPal to{" "}
+                Send <span className="text-gold font-black">$5 per entry</span>{" "}
+                via PayPal to{" "}
                 <span className="text-gold font-bold">
                   klandrum21@gmail.com
                 </span>{" "}
@@ -197,8 +198,12 @@ export default function EntryForm() {
         <h1 className="text-4xl font-black text-white tracking-tight mb-2">
           MAKE YOUR <span className="text-gold">PICKS</span>
         </h1>
-        <p className="text-white/60">
+        <p className="text-white/70">
           Select one team per seed (1–16) to build your survivor bracket.
+        </p>
+        <p className="text-white/80 text-sm mt-3 font-semibold">
+          Entry fee: <span className="text-gold font-black">$5 per entry</span>{" "}
+          — multiple entries allowed.
         </p>
       </div>
 
@@ -243,7 +248,8 @@ export default function EntryForm() {
                 </Badge>
               </div>
               <p className="text-white/80 text-sm leading-relaxed">
-                Send your entry fee to{" "}
+                Send <span className="text-gold font-black">$5 per entry</span>{" "}
+                to{" "}
                 <span className="text-gold font-black">
                   klandrum21@gmail.com
                 </span>{" "}
@@ -289,7 +295,7 @@ export default function EntryForm() {
                 onChange={(e) => setParticipantName(e.target.value)}
                 placeholder="Enter your name..."
                 disabled={!isRegistrationOpen}
-                className="bg-white border-white/20 text-black placeholder:text-black/40 focus:border-gold focus:ring-gold/20 text-base"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-gold focus:ring-gold/20 text-base"
               />
             </div>
             <div>
@@ -306,7 +312,7 @@ export default function EntryForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 disabled={!isRegistrationOpen}
-                className="bg-white border-white/20 text-black placeholder:text-black/40 focus:border-gold focus:ring-gold/20 text-base"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-gold focus:ring-gold/20 text-base"
               />
             </div>
           </CardContent>
@@ -333,8 +339,8 @@ export default function EntryForm() {
                   key={seed}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${
                     hasPick
-                      ? "bg-gold/5 border-gold/30"
-                      : "bg-navy/30 border-white/10"
+                      ? "bg-gold/10 border-gold/30"
+                      : "bg-white/5 border-white/10"
                   }`}
                 >
                   <SeedBadge
@@ -357,7 +363,7 @@ export default function EntryForm() {
                         onValueChange={(val) => handlePickChange(seed, val)}
                         disabled={!isRegistrationOpen}
                       >
-                        <SelectTrigger className="bg-navy/50 border-white/20 text-white focus:border-gold h-9 text-sm">
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white focus:border-gold h-9 text-sm">
                           <SelectValue placeholder="Select a team..." />
                         </SelectTrigger>
                         <SelectContent className="bg-navy-card border-gold/20">

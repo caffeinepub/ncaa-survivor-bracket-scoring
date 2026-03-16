@@ -29,6 +29,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   CheckCircle,
   DollarSign,
   Download,
@@ -817,233 +823,276 @@ export default function Admin() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2" data-ocid="admin.payments.table">
-                  {leaderboardEntries.map(([entryId, entry], idx) => {
-                    const rowNum = idx + 1;
-                    const isPaid = entry.paymentConfirmed;
-                    const isPaymentBusy =
-                      (confirmPaymentMutation.isPending &&
-                        confirmPaymentMutation.variables === entryId) ||
-                      (unconfirmPaymentMutation.isPending &&
-                        unconfirmPaymentMutation.variables === entryId);
-                    const isDeleteBusy =
-                      deleteEntryMutation.isPending &&
-                      deleteEntryMutation.variables === entryId;
-                    const isBusy = isPaymentBusy || isDeleteBusy;
+                <TooltipProvider delayDuration={200}>
+                  <div className="space-y-2" data-ocid="admin.payments.table">
+                    {leaderboardEntries.map(([entryId, entry], idx) => {
+                      const rowNum = idx + 1;
+                      const isPaid = entry.paymentConfirmed;
+                      const isPaymentBusy =
+                        (confirmPaymentMutation.isPending &&
+                          confirmPaymentMutation.variables === entryId) ||
+                        (unconfirmPaymentMutation.isPending &&
+                          unconfirmPaymentMutation.variables === entryId);
+                      const isDeleteBusy =
+                        deleteEntryMutation.isPending &&
+                        deleteEntryMutation.variables === entryId;
+                      const isBusy = isPaymentBusy || isDeleteBusy;
 
-                    return (
-                      <div
-                        key={entryId.toString()}
-                        className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
-                          isPaid
-                            ? "bg-emerald/5 border-emerald/20"
-                            : "bg-navy/30 border-white/10"
-                        }`}
-                      >
-                        {/* Left: info */}
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <span className="text-white/30 text-xs font-black w-6 shrink-0">
-                            #{rowNum}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-white font-bold text-sm truncate">
-                              {entry.participantName}
-                            </p>
-                            {entry.email && (
-                              <p className="text-white/40 text-xs truncate">
-                                {entry.email}
+                      return (
+                        <div
+                          key={entryId.toString()}
+                          className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
+                            isPaid
+                              ? "bg-emerald/5 border-emerald/20"
+                              : "bg-navy/30 border-white/10"
+                          }`}
+                        >
+                          {/* Left: info */}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className="text-white/30 text-xs font-black w-6 shrink-0">
+                              #{rowNum}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-white font-bold text-sm truncate">
+                                {entry.participantName}
                               </p>
-                            )}
+                              {entry.email && (
+                                <p className="text-white/40 text-xs truncate">
+                                  {entry.email}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right: name label + badge + buttons */}
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <span className="text-white/70 text-xs font-semibold truncate max-w-[140px]">
+                              {entry.participantName}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                className={
+                                  isPaid
+                                    ? "bg-emerald/20 text-emerald border border-emerald/40 font-bold"
+                                    : "bg-red-500/10 text-red-400 border border-red-500/30 font-bold"
+                                }
+                              >
+                                {isPaid ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Paid
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    Unpaid
+                                  </>
+                                )}
+                              </Badge>
+
+                              {/* Mark Paid / Mark Unpaid with tooltip + confirmation dialog */}
+                              {isPaid ? (
+                                <Tooltip>
+                                  <AlertDialog>
+                                    <TooltipTrigger asChild>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          disabled={isBusy}
+                                          className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
+                                          data-ocid="admin.payments.mark_unpaid.open_modal_button"
+                                        >
+                                          {isPaymentBusy ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            "Mark Unpaid"
+                                          )}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="top"
+                                      className="bg-navy-card border border-white/20 text-white text-xs font-semibold px-3 py-1.5"
+                                    >
+                                      Mark {entry.participantName} as Unpaid
+                                    </TooltipContent>
+                                    <AlertDialogContent
+                                      className="bg-navy-card border-white/20"
+                                      data-ocid="admin.payments.mark_unpaid.dialog"
+                                    >
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-white font-black">
+                                          Mark as Unpaid?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-white/60">
+                                          Mark{" "}
+                                          <span className="text-white font-semibold">
+                                            {entry.participantName}
+                                          </span>
+                                          's payment as unpaid?
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel
+                                          className="border-white/20 text-white/70 hover:bg-white/10"
+                                          data-ocid="admin.payments.mark_unpaid.cancel_button"
+                                        >
+                                          Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() =>
+                                            handleUnconfirmPayment(
+                                              entryId,
+                                              rowNum,
+                                            )
+                                          }
+                                          className="border-white/20 bg-navy/60 hover:bg-white/10 text-white font-black"
+                                          data-ocid={`admin.payments.mark_unpaid.confirm_button.${rowNum}`}
+                                        >
+                                          Yes, Mark Unpaid
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </Tooltip>
+                              ) : (
+                                <Tooltip>
+                                  <AlertDialog>
+                                    <TooltipTrigger asChild>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          disabled={isBusy}
+                                          className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
+                                          data-ocid="admin.payments.mark_paid.open_modal_button"
+                                        >
+                                          {isPaymentBusy ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            "Mark Paid"
+                                          )}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="top"
+                                      className="bg-navy-card border border-white/20 text-white text-xs font-semibold px-3 py-1.5"
+                                    >
+                                      Mark {entry.participantName} as Paid
+                                    </TooltipContent>
+                                    <AlertDialogContent
+                                      className="bg-navy-card border-emerald/30"
+                                      data-ocid="admin.payments.mark_paid.dialog"
+                                    >
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-white font-black">
+                                          Mark as Paid?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-white/60">
+                                          Confirm that{" "}
+                                          <span className="text-white font-semibold">
+                                            {entry.participantName}
+                                          </span>{" "}
+                                          has paid.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel
+                                          className="border-white/20 text-white/70 hover:bg-white/10"
+                                          data-ocid="admin.payments.mark_paid.cancel_button"
+                                        >
+                                          Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() =>
+                                            handleConfirmPayment(
+                                              entryId,
+                                              rowNum,
+                                            )
+                                          }
+                                          className="bg-emerald/80 hover:bg-emerald text-navy font-black"
+                                          data-ocid={`admin.payments.mark_paid.confirm_button.${rowNum}`}
+                                        >
+                                          <CheckCircle className="w-4 h-4 mr-2" />
+                                          Yes, Mark Paid
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </Tooltip>
+                              )}
+
+                              {/* Delete Entry */}
+                              <Tooltip>
+                                <AlertDialog>
+                                  <TooltipTrigger asChild>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={isBusy}
+                                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/50 text-xs font-bold"
+                                        data-ocid={`admin.payments.delete_button.${rowNum}`}
+                                      >
+                                        {isDeleteBusy ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="w-3 h-3" />
+                                        )}
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                  </TooltipTrigger>
+                                  <TooltipContent
+                                    side="top"
+                                    className="bg-navy-card border border-red-500/30 text-red-300 text-xs font-semibold px-3 py-1.5"
+                                  >
+                                    Delete {entry.participantName}
+                                  </TooltipContent>
+                                  <AlertDialogContent
+                                    className="bg-navy-card border-red-500/30"
+                                    data-ocid="admin.payments.delete.dialog"
+                                  >
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="text-white font-black">
+                                        Delete Entry?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription className="text-white/60">
+                                        This will permanently remove{" "}
+                                        <span className="text-white font-semibold">
+                                          {entry.participantName}
+                                        </span>
+                                        's entry. This cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel
+                                        className="border-white/20 text-white/70 hover:bg-white/10"
+                                        data-ocid="admin.payments.delete.cancel_button"
+                                      >
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleDeleteEntry(entryId, rowNum)
+                                        }
+                                        className="bg-red-500/80 hover:bg-red-500 text-white font-black"
+                                        data-ocid="admin.payments.delete.confirm_button"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete Entry
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </Tooltip>
+                            </div>
                           </div>
                         </div>
-
-                        {/* Right: badge + buttons */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Badge
-                            className={
-                              isPaid
-                                ? "bg-emerald/20 text-emerald border border-emerald/40 font-bold"
-                                : "bg-red-500/10 text-red-400 border border-red-500/30 font-bold"
-                            }
-                          >
-                            {isPaid ? (
-                              <>
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Paid
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-3 h-3 mr-1" />
-                                Unpaid
-                              </>
-                            )}
-                          </Badge>
-
-                          {/* Mark Paid / Mark Unpaid with confirmation dialog */}
-                          {isPaid ? (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={isBusy}
-                                  className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
-                                  data-ocid="admin.payments.mark_unpaid.open_modal_button"
-                                >
-                                  {isPaymentBusy ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    "Mark Unpaid"
-                                  )}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent
-                                className="bg-navy-card border-white/20"
-                                data-ocid="admin.payments.mark_unpaid.dialog"
-                              >
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white font-black">
-                                    Mark as Unpaid?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription className="text-white/60">
-                                    Mark{" "}
-                                    <span className="text-white font-semibold">
-                                      {entry.participantName}
-                                    </span>
-                                    's payment as unpaid?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel
-                                    className="border-white/20 text-white/70 hover:bg-white/10"
-                                    data-ocid="admin.payments.mark_unpaid.cancel_button"
-                                  >
-                                    Cancel
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleUnconfirmPayment(entryId, rowNum)
-                                    }
-                                    className="border-white/20 bg-navy/60 hover:bg-white/10 text-white font-black"
-                                    data-ocid={`admin.payments.mark_unpaid.confirm_button.${rowNum}`}
-                                  >
-                                    Yes, Mark Unpaid
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          ) : (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  disabled={isBusy}
-                                  className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
-                                  data-ocid="admin.payments.mark_paid.open_modal_button"
-                                >
-                                  {isPaymentBusy ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    "Mark Paid"
-                                  )}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent
-                                className="bg-navy-card border-emerald/30"
-                                data-ocid="admin.payments.mark_paid.dialog"
-                              >
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white font-black">
-                                    Mark as Paid?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription className="text-white/60">
-                                    Confirm that{" "}
-                                    <span className="text-white font-semibold">
-                                      {entry.participantName}
-                                    </span>{" "}
-                                    has paid.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel
-                                    className="border-white/20 text-white/70 hover:bg-white/10"
-                                    data-ocid="admin.payments.mark_paid.cancel_button"
-                                  >
-                                    Cancel
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleConfirmPayment(entryId, rowNum)
-                                    }
-                                    className="bg-emerald/80 hover:bg-emerald text-navy font-black"
-                                    data-ocid={`admin.payments.mark_paid.confirm_button.${rowNum}`}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Yes, Mark Paid
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-
-                          {/* Delete Entry */}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={isBusy}
-                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/50 text-xs font-bold"
-                                data-ocid={`admin.payments.delete_button.${rowNum}`}
-                              >
-                                {isDeleteBusy ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-3 h-3" />
-                                )}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent
-                              className="bg-navy-card border-red-500/30"
-                              data-ocid="admin.payments.delete.dialog"
-                            >
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-white font-black">
-                                  Delete Entry?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-white/60">
-                                  This will permanently remove{" "}
-                                  <span className="text-white font-semibold">
-                                    {entry.participantName}
-                                  </span>
-                                  's entry. This cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel
-                                  className="border-white/20 text-white/70 hover:bg-white/10"
-                                  data-ocid="admin.payments.delete.cancel_button"
-                                >
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDeleteEntry(entryId, rowNum)
-                                  }
-                                  className="bg-red-500/80 hover:bg-red-500 text-white font-black"
-                                  data-ocid="admin.payments.delete.confirm_button"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Entry
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
               )}
             </CardContent>
           </Card>

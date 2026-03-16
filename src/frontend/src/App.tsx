@@ -24,7 +24,6 @@ function TeamAutoLoader() {
     if (!actor || isFetching) return;
     const existing = getLocalTeams();
     if (existing.length > 0) return;
-    // Auto-load teams from backend when localStorage is empty
     actor
       .getTeams()
       .then((allTeams) => {
@@ -38,9 +37,7 @@ function TeamAutoLoader() {
           );
         }
       })
-      .catch(() => {
-        // Silently ignore — teams may not be seeded yet
-      });
+      .catch(() => {});
   }, [actor, isFetching]);
 
   return null;
@@ -48,14 +45,24 @@ function TeamAutoLoader() {
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Header />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <Footer />
-      <Toaster richColors position="top-right" />
-      <TeamAutoLoader />
+    <div className="min-h-screen flex flex-col text-foreground relative">
+      {/* Persistent bracket background across all pages */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/assets/generated/hero-banner.dim_1400x500.png"
+          alt=""
+          className="w-full h-full object-cover object-center"
+        />
+      </div>
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <Footer />
+        <Toaster richColors position="top-right" />
+        <TeamAutoLoader />
+      </div>
     </div>
   ),
 });

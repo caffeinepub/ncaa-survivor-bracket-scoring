@@ -42,16 +42,6 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        {/* Background image layer — sits behind everything */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/assets/generated/hero-banner.dim_1400x500.png"
-            alt="NCAA Tournament Bracket"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-navy/80 via-navy/70 to-navy" />
-        </div>
-
         {/* Text content — always on top of the image */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36 text-center">
           <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/40 rounded-full px-4 py-1.5 mb-6">
