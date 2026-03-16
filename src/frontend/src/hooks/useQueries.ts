@@ -3,11 +3,6 @@ import type { TournamentPhase, backendInterface } from "../backend";
 import type { BackendWithTeams } from "../lib/backendTypes";
 import { useActor } from "./useActor";
 
-// Extended interface to include deleteEntry (added in backend but not yet in generated types)
-type BackendWithDelete = backendInterface & {
-  deleteEntry(entryId: bigint): Promise<void>;
-};
-
 // ─── Leaderboard ────────────────────────────────────────────────────────────
 export function useLeaderboard() {
   const { actor, isFetching } = useActor();
@@ -101,7 +96,7 @@ export function useDeleteEntry() {
   return useMutation({
     mutationFn: async (entryId: bigint) => {
       if (!actor) throw new Error("Actor not ready");
-      return (actor as unknown as BackendWithDelete).deleteEntry(entryId);
+      return actor.deleteEntry(entryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
@@ -171,5 +166,22 @@ export function useGetTeams() {
       return (actor as BackendWithTeams).getTeams();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// ─── Seed 2025 Test Data ───────────────────────────────────────────────────────
+export function useSeedTestData2025() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.seedTestData2025();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+    },
   });
 }

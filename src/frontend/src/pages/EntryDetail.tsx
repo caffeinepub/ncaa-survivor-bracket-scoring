@@ -10,8 +10,9 @@ import {
   Trophy,
   XCircle,
 } from "lucide-react";
+import { Variant_active_eliminated } from "../backend";
 import SeedBadge from "../components/SeedBadge";
-import { useEntry } from "../hooks/useQueries";
+import { useEntry, useGetTeams } from "../hooks/useQueries";
 import { getTeamById } from "../lib/teamStore";
 
 export default function EntryDetail() {
@@ -19,6 +20,10 @@ export default function EntryDetail() {
   const entryIdBigInt = BigInt(entryId);
 
   const { data: entry, isLoading, error } = useEntry(entryIdBigInt);
+  const { data: teams } = useGetTeams();
+
+  // Build a map of teamId -> team for quick lookup
+  const teamMap = new Map((teams ?? []).map((t) => [Number(t.id), t]));
 
   if (isLoading) {
     return (
@@ -57,12 +62,16 @@ export default function EntryDetail() {
 
   const totalPoints = Number(entry.totalPoints);
   const activeTeams = Number(entry.activeTeams);
-  const eliminatedTeams = 16 - activeTeams;
 
   // Sort picks by seed
   const sortedPicks = [...entry.picks].sort(
     (a, b) => Number(a[0]) - Number(b[0]),
   );
+
+  const eliminatedTeams = sortedPicks.filter(([, teamId]) => {
+    const t = teamMap.get(Number(teamId));
+    return t?.status === Variant_active_eliminated.eliminated;
+  }).length;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
@@ -122,7 +131,9 @@ export default function EntryDetail() {
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black text-white">16</div>
+              <div className="text-2xl font-black text-white">
+                {sortedPicks.length}
+              </div>
               <div className="text-white/40 text-xs font-semibold uppercase tracking-wide mt-0.5">
                 Total Picks
               </div>
@@ -135,7 +146,7 @@ export default function EntryDetail() {
       <Card className="bg-navy-card border-gold/20">
         <CardHeader className="border-b border-white/10 pb-4">
           <CardTitle className="text-white font-black flex items-center gap-2">
-            All 16 Picks
+            All {sortedPicks.length} Picks
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
@@ -143,20 +154,26 @@ export default function EntryDetail() {
             {sortedPicks.map(([seed, teamId]) => {
               const seedNum = Number(seed);
               const teamIdNum = Number(teamId);
+              const backendTeam = teamMap.get(teamIdNum);
               const localTeam = getTeamById(teamIdNum);
-              const teamName = localTeam?.name || `Team #${teamIdNum}`;
+              const teamName =
+                backendTeam?.name || localTeam?.name || `Team #${teamIdNum}`;
+              const teamPoints = backendTeam
+                ? Number(backendTeam.points)
+                : null;
 
-              // We don't have per-team points from the backend, so we show what we can
-              // The backend Entry type only has totalPoints, not per-pick points
-              const isActive = true; // We can't determine per-team status without backend support
+              // Use real status from backend if available; default to active if no data yet
+              const isActive =
+                !backendTeam ||
+                backendTeam.status === Variant_active_eliminated.active;
 
               return (
                 <div
                   key={seedNum}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${
                     isActive
-                      ? "bg-navy/30 border-white/10 hover:border-gold/20"
-                      : "bg-white/5 border-white/5 opacity-50"
+                      ? "bg-navy/30 border-emerald/20 hover:border-gold/20"
+                      : "bg-white/3 border-white/5 opacity-40"
                   }`}
                 >
                   <SeedBadge
@@ -167,12 +184,19 @@ export default function EntryDetail() {
 
                   <div className="flex-1 min-w-0">
                     <span
-                      className={`font-bold text-base ${isActive ? "text-white" : "text-white/40"}`}
+                      className={`font-bold text-base ${
+                        isActive ? "text-white" : "text-white/50"
+                      }`}
                     >
                       {teamName}
                     </span>
                     <div className="text-white/30 text-xs mt-0.5">
                       Seed {seedNum}
+                      {teamPoints !== null && teamPoints > 0 && (
+                        <span className="ml-2 text-gold/70">
+                          {teamPoints.toLocaleString()} pts
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -183,7 +207,10 @@ export default function EntryDetail() {
                         Active
                       </Badge>
                     ) : (
-                      <Badge variant="destructive" className="text-xs">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs opacity-80"
+                      >
                         <XCircle className="w-3 h-3 mr-1" />
                         Eliminated
                       </Badge>

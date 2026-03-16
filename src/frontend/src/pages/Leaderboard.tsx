@@ -3,7 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@tanstack/react-router";
-import { Clock, RefreshCw, Shield, Trophy, Users, Zap } from "lucide-react";
+import {
+  Clock,
+  RefreshCw,
+  Shield,
+  Trophy,
+  Users,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLeaderboard } from "../hooks/useQueries";
 
@@ -132,8 +140,22 @@ export default function Leaderboard() {
         </div>
       )}
 
+      {/* Legend */}
+      {leaderboard && leaderboard.length > 0 && (
+        <div className="flex items-center gap-4 mb-3 px-1">
+          <div className="flex items-center gap-1.5 text-xs text-white/50">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald" />
+            Still Playing
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-white/30">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+            Eliminated
+          </div>
+        </div>
+      )}
+
       {/* Leaderboard List */}
-      <Card className="bg-navy-card border-gold/20">
+      <Card className="bg-navy-card border-gold/20 overflow-hidden">
         <CardHeader className="border-b border-white/10 pb-4">
           <CardTitle className="text-white font-black flex items-center gap-2">
             <Trophy className="w-5 h-5 text-gold" />
@@ -151,7 +173,10 @@ export default function Leaderboard() {
               ))}
             </div>
           ) : !leaderboard || leaderboard.length === 0 ? (
-            <div className="py-16 text-center">
+            <div
+              className="py-16 text-center"
+              data-ocid="leaderboard.empty_state"
+            >
               <Trophy className="w-12 h-12 text-white/20 mx-auto mb-3" />
               <p className="text-white/40 font-semibold">No entries yet.</p>
               <p className="text-white/30 text-sm mt-1">
@@ -178,29 +203,45 @@ export default function Leaderboard() {
                     key={entryIdStr}
                     to="/entry/$entryId"
                     params={{ entryId: entryIdStr }}
-                    className={`flex items-center gap-4 px-6 py-4 transition-colors hover:bg-white/5 cursor-pointer block ${
-                      isEliminated ? "opacity-50" : ""
-                    } ${rank === 1 ? "bg-gold/5" : ""}`}
+                    data-ocid={`leaderboard.row.${rank}`}
+                    className={[
+                      "flex items-center gap-4 px-6 py-4 transition-all cursor-pointer block relative",
+                      "border-l-4",
+                      isEliminated
+                        ? "border-l-red-500/40 opacity-45 hover:opacity-60 bg-white/[0.01]"
+                        : "border-l-emerald/50 hover:bg-white/5",
+                      rank === 1 && !isEliminated ? "bg-gold/5" : "",
+                    ].join(" ")}
                   >
                     <RankBadge rank={rank} />
 
                     <div className="flex-1 min-w-0">
-                      <span className="text-white font-bold hover:text-gold transition-colors truncate block">
-                        {entry.participantName}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-bold hover:text-gold transition-colors truncate block ${
+                            isEliminated ? "text-white/50" : "text-white"
+                          }`}
+                        >
+                          {entry.participantName}
+                        </span>
+                        {!isEliminated && (
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-emerald bg-emerald/10 border border-emerald/20 rounded-full px-2 py-0.5">
+                            <Shield className="w-2.5 h-2.5" />
+                            Playing
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {isEliminated ? (
-                          <Badge
-                            variant="destructive"
-                            className="text-xs px-2 py-0 h-5"
-                          >
+                          <span className="text-red-400/70 text-xs flex items-center gap-1">
+                            <XCircle className="w-3 h-3" />
                             Eliminated
-                          </Badge>
+                          </span>
                         ) : (
                           <span className="text-white/40 text-xs flex items-center gap-1">
                             <Shield className="w-3 h-3 text-emerald" />
                             {activeTeams} team{activeTeams !== 1 ? "s" : ""}{" "}
-                            active
+                            still active
                           </span>
                         )}
                       </div>
@@ -208,7 +249,13 @@ export default function Leaderboard() {
 
                     <div className="text-right shrink-0">
                       <div
-                        className={`text-2xl font-black ${rank === 1 ? "text-gold" : "text-white"}`}
+                        className={`text-2xl font-black ${
+                          isEliminated
+                            ? "text-white/30"
+                            : rank === 1
+                              ? "text-gold"
+                              : "text-white"
+                        }`}
                       >
                         {totalPoints.toLocaleString()}
                       </div>

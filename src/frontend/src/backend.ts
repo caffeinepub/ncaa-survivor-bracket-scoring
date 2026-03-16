@@ -134,12 +134,14 @@ export enum Variant_active_eliminated {
 export interface backendInterface {
     addTeam(name: string, seed: bigint): Promise<bigint>;
     confirmPayment(entryId: bigint): Promise<void>;
+    deleteEntry(entryId: bigint): Promise<void>;
     fetchAndSyncScores(): Promise<string>;
     getEntry(entryId: bigint): Promise<Entry>;
     getLeaderboard(): Promise<Array<[bigint, Entry]>>;
     getTeams(): Promise<Array<Team>>;
     registerEntry(participantName: string, email: string, picks: Array<[bigint, bigint]>): Promise<bigint>;
     seedTeamsFromBracket(): Promise<bigint>;
+    seedTestData2025(): Promise<string>;
     setTournamentPhase(phase: TournamentPhase): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unconfirmPayment(entryId: bigint): Promise<void>;
@@ -172,6 +174,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.confirmPayment(arg0);
+            return result;
+        }
+    }
+    async deleteEntry(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteEntry(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteEntry(arg0);
             return result;
         }
     }
@@ -256,6 +272,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.seedTeamsFromBracket();
+            return result;
+        }
+    }
+    async seedTestData2025(): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedTestData2025();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedTestData2025();
             return result;
         }
     }

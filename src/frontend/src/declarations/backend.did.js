@@ -50,6 +50,7 @@ export const TransformationOutput = IDL.Record({
 export const idlService = IDL.Service({
   'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
   'confirmPayment' : IDL.Func([IDL.Nat], [], []),
+  'deleteEntry' : IDL.Func([IDL.Nat], [], []),
   'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
   'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
   'getLeaderboard' : IDL.Func(
@@ -64,6 +65,7 @@ export const idlService = IDL.Service({
       [],
     ),
   'seedTeamsFromBracket' : IDL.Func([], [IDL.Nat], []),
+  'seedTestData2025' : IDL.Func([], [IDL.Text], []),
   'setTournamentPhase' : IDL.Func([TournamentPhase], [], []),
   'transform' : IDL.Func(
       [TransformationInput],
@@ -115,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
     'confirmPayment' : IDL.Func([IDL.Nat], [], []),
+    'deleteEntry' : IDL.Func([IDL.Nat], [], []),
     'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
     'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
     'getLeaderboard' : IDL.Func(
@@ -129,6 +132,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'seedTeamsFromBracket' : IDL.Func([], [IDL.Nat], []),
+    'seedTestData2025' : IDL.Func([], [IDL.Text], []),
     'setTournamentPhase' : IDL.Func([TournamentPhase], [], []),
     'transform' : IDL.Func(
         [TransformationInput],

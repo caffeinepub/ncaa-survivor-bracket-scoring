@@ -59,6 +59,7 @@ export interface backendInterface {
     getTeams(): Promise<Array<Team>>;
     registerEntry(participantName: string, email: string, picks: Array<[bigint, bigint]>): Promise<bigint>;
     seedTeamsFromBracket(): Promise<bigint>;
+    seedTestData2025(): Promise<string>;
     setTournamentPhase(phase: TournamentPhase): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unconfirmPayment(entryId: bigint): Promise<void>;
