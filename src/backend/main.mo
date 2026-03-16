@@ -131,6 +131,16 @@ actor {
     };
   };
 
+  // Delete an entry (admin function)
+  public shared ({ caller }) func deleteEntry(entryId : Nat) : async () {
+    switch (entries.get(entryId)) {
+      case (null) { Runtime.trap("Entry not found") };
+      case (?_) {
+        ignore entries.remove(entryId);
+      };
+    };
+  };
+
   // Leaderboard retrieval
   module Entry {
     public func compareByTotalPointsReversed(left : (Nat, Entry), right : (Nat, Entry)) : Order.Order {

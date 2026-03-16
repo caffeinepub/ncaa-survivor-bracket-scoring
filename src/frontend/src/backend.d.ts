@@ -52,6 +52,7 @@ export enum Variant_active_eliminated {
 export interface backendInterface {
     addTeam(name: string, seed: bigint): Promise<bigint>;
     confirmPayment(entryId: bigint): Promise<void>;
+    deleteEntry(entryId: bigint): Promise<void>;
     fetchAndSyncScores(): Promise<string>;
     getEntry(entryId: bigint): Promise<Entry>;
     getLeaderboard(): Promise<Array<[bigint, Entry]>>;

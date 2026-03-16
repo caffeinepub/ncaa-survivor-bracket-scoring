@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TournamentPhase } from "../backend";
+import type { TournamentPhase, backendInterface } from "../backend";
 import type { BackendWithTeams } from "../lib/backendTypes";
 import { useActor } from "./useActor";
+
+// Extended interface to include deleteEntry (added in backend but not yet in generated types)
+type BackendWithDelete = backendInterface & {
+  deleteEntry(entryId: bigint): Promise<void>;
+};
 
 // ─── Leaderboard ────────────────────────────────────────────────────────────
 export function useLeaderboard() {
@@ -81,6 +86,22 @@ export function useUnconfirmPayment() {
     mutationFn: async (entryId: bigint) => {
       if (!actor) throw new Error("Actor not ready");
       return actor.unconfirmPayment(entryId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
+// ─── Delete Entry ─────────────────────────────────────────────────────────────
+export function useDeleteEntry() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryId: bigint) => {
+      if (!actor) throw new Error("Actor not ready");
+      return (actor as unknown as BackendWithDelete).deleteEntry(entryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });

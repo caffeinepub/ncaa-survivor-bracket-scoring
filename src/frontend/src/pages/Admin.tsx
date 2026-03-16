@@ -37,6 +37,7 @@ import {
   RefreshCw,
   Settings,
   Swords,
+  Trash2,
   Trophy,
   Users,
   XCircle,
@@ -49,6 +50,7 @@ import { useActor } from "../hooks/useActor";
 import {
   useAddTeam,
   useConfirmPayment,
+  useDeleteEntry,
   useFetchAndSyncScores,
   useLeaderboard,
   useSeedTeamsFromBracket,
@@ -104,6 +106,7 @@ export default function Admin() {
   const seedTeamsMutation = useSeedTeamsFromBracket();
   const confirmPaymentMutation = useConfirmPayment();
   const unconfirmPaymentMutation = useUnconfirmPayment();
+  const deleteEntryMutation = useDeleteEntry();
   const leaderboardQuery = useLeaderboard();
 
   useEffect(() => {
@@ -263,6 +266,17 @@ export default function Admin() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to unconfirm payment";
+      toast.error(message);
+    }
+  };
+
+  const handleDeleteEntry = async (entryId: bigint, index: number) => {
+    try {
+      await deleteEntryMutation.mutateAsync(entryId);
+      toast.success(`Entry #${index} deleted.`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete entry";
       toast.error(message);
     }
   };
@@ -807,11 +821,15 @@ export default function Admin() {
                   {leaderboardEntries.map(([entryId, entry], idx) => {
                     const rowNum = idx + 1;
                     const isPaid = entry.paymentConfirmed;
-                    const isBusy =
+                    const isPaymentBusy =
                       (confirmPaymentMutation.isPending &&
                         confirmPaymentMutation.variables === entryId) ||
                       (unconfirmPaymentMutation.isPending &&
                         unconfirmPaymentMutation.variables === entryId);
+                    const isDeleteBusy =
+                      deleteEntryMutation.isPending &&
+                      deleteEntryMutation.variables === entryId;
+                    const isBusy = isPaymentBusy || isDeleteBusy;
 
                     return (
                       <div
@@ -839,8 +857,8 @@ export default function Admin() {
                           </div>
                         </div>
 
-                        {/* Right: badge + button */}
-                        <div className="flex items-center gap-3 shrink-0">
+                        {/* Right: badge + buttons */}
+                        <div className="flex items-center gap-2 shrink-0">
                           <Badge
                             className={
                               isPaid
@@ -872,7 +890,7 @@ export default function Admin() {
                               className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
                               data-ocid={`admin.payments.confirm_button.${rowNum}`}
                             >
-                              {isBusy ? (
+                              {isPaymentBusy ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
                               ) : (
                                 "Mark Unpaid"
@@ -888,13 +906,67 @@ export default function Admin() {
                               className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
                               data-ocid={`admin.payments.confirm_button.${rowNum}`}
                             >
-                              {isBusy ? (
+                              {isPaymentBusy ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
                               ) : (
                                 "Mark Paid"
                               )}
                             </Button>
                           )}
+
+                          {/* Delete Entry */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isBusy}
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/50 text-xs font-bold"
+                                data-ocid={`admin.payments.delete_button.${rowNum}`}
+                              >
+                                {isDeleteBusy ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent
+                              className="bg-navy-card border-red-500/30"
+                              data-ocid="admin.payments.delete.dialog"
+                            >
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-white font-black">
+                                  Delete Entry?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-white/60">
+                                  This will permanently remove{" "}
+                                  <span className="text-white font-semibold">
+                                    {entry.participantName}
+                                  </span>
+                                  's entry. This cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel
+                                  className="border-white/20 text-white/70 hover:bg-white/10"
+                                  data-ocid="admin.payments.delete.cancel_button"
+                                >
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDeleteEntry(entryId, rowNum)
+                                  }
+                                  className="bg-red-500/80 hover:bg-red-500 text-white font-black"
+                                  data-ocid="admin.payments.delete.confirm_button"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Entry
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     );
