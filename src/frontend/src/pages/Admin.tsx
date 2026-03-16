@@ -54,7 +54,6 @@ import {
   useFetchAndSyncScores,
   useLeaderboard,
   useSeedTeamsFromBracket,
-  useSeedTestData2025,
   useSetTournamentPhase,
   useUnconfirmPayment,
 } from "../hooks/useQueries";
@@ -105,7 +104,6 @@ export default function Admin() {
   const setPhaseMutation = useSetTournamentPhase();
   const syncScoresMutation = useFetchAndSyncScores();
   const seedTeamsMutation = useSeedTeamsFromBracket();
-  const seedTestData2025Mutation = useSeedTestData2025();
   const confirmPaymentMutation = useConfirmPayment();
   const unconfirmPaymentMutation = useUnconfirmPayment();
   const deleteEntryMutation = useDeleteEntry();
@@ -246,30 +244,6 @@ export default function Admin() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to load bracket teams";
-      toast.error(message);
-    }
-  };
-
-  const handleSeedTestData2025 = async () => {
-    try {
-      const result = await seedTestData2025Mutation.mutateAsync();
-      toast.success(String(result));
-      if (actor) {
-        const allTeams = await actor.getTeams();
-        setLocalTeams(
-          allTeams.map((t) => ({
-            id: Number(t.id),
-            name: t.name,
-            seed: Number(t.seed),
-          })),
-        );
-        setLocalPhase("inProgress");
-        setPhase("inProgress");
-        refreshLocalData();
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load test data";
       toast.error(message);
     }
   };
@@ -434,74 +408,6 @@ export default function Admin() {
                       data-ocid="admin.load_teams.confirm_button"
                     >
                       Yes, Load Teams
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
-
-          {/* Load 2025 Test Data */}
-          <Card className="bg-navy-card border-gold/20">
-            <CardHeader>
-              <CardTitle className="text-white font-black flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-gold" />
-                Load 2025 Test Data
-              </CardTitle>
-              <CardDescription className="text-white/50">
-                Clears all current data and loads 16 representative 2025 NCAA
-                teams plus 10 sample entries with scores. Use this to test the
-                leaderboard and admin features before the 2026 tournament.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    disabled={seedTestData2025Mutation.isPending}
-                    className="bg-gold hover:bg-gold/90 text-navy font-black"
-                    data-ocid="admin.test_data.primary_button"
-                  >
-                    {seedTestData2025Mutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading Test Data…
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Load 2025 Test Data
-                      </>
-                    )}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent
-                  className="bg-navy-card border-gold/20"
-                  data-ocid="admin.test_data.dialog"
-                >
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white font-black">
-                      Load 2025 Test Data?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-white/60">
-                      This will permanently clear all existing teams and
-                      entries, then load 16 teams from the 2025 tournament and
-                      10 sample entries with scores. This cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel
-                      className="border-white/20 text-white/70 hover:bg-white/10"
-                      data-ocid="admin.test_data.cancel_button"
-                    >
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleSeedTestData2025}
-                      className="bg-gold hover:bg-gold/90 text-navy font-black"
-                      data-ocid="admin.test_data.confirm_button"
-                    >
-                      Yes, Load Test Data
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -973,39 +879,111 @@ export default function Admin() {
                             )}
                           </Badge>
 
+                          {/* Mark Paid / Mark Unpaid with confirmation dialog */}
                           {isPaid ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={isBusy}
-                              onClick={() =>
-                                handleUnconfirmPayment(entryId, rowNum)
-                              }
-                              className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
-                              data-ocid={`admin.payments.confirm_button.${rowNum}`}
-                            >
-                              {isPaymentBusy ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                "Mark Unpaid"
-                              )}
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isBusy}
+                                  className="border-white/20 text-white/60 hover:bg-white/10 hover:text-white text-xs font-bold"
+                                  data-ocid="admin.payments.mark_unpaid.open_modal_button"
+                                >
+                                  {isPaymentBusy ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    "Mark Unpaid"
+                                  )}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent
+                                className="bg-navy-card border-white/20"
+                                data-ocid="admin.payments.mark_unpaid.dialog"
+                              >
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white font-black">
+                                    Mark as Unpaid?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="text-white/60">
+                                    Mark{" "}
+                                    <span className="text-white font-semibold">
+                                      {entry.participantName}
+                                    </span>
+                                    's payment as unpaid?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel
+                                    className="border-white/20 text-white/70 hover:bg-white/10"
+                                    data-ocid="admin.payments.mark_unpaid.cancel_button"
+                                  >
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleUnconfirmPayment(entryId, rowNum)
+                                    }
+                                    className="border-white/20 bg-navy/60 hover:bg-white/10 text-white font-black"
+                                    data-ocid={`admin.payments.mark_unpaid.confirm_button.${rowNum}`}
+                                  >
+                                    Yes, Mark Unpaid
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           ) : (
-                            <Button
-                              size="sm"
-                              disabled={isBusy}
-                              onClick={() =>
-                                handleConfirmPayment(entryId, rowNum)
-                              }
-                              className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
-                              data-ocid={`admin.payments.confirm_button.${rowNum}`}
-                            >
-                              {isPaymentBusy ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                "Mark Paid"
-                              )}
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  disabled={isBusy}
+                                  className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald/40 text-xs font-bold"
+                                  data-ocid="admin.payments.mark_paid.open_modal_button"
+                                >
+                                  {isPaymentBusy ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    "Mark Paid"
+                                  )}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent
+                                className="bg-navy-card border-emerald/30"
+                                data-ocid="admin.payments.mark_paid.dialog"
+                              >
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white font-black">
+                                    Mark as Paid?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="text-white/60">
+                                    Confirm that{" "}
+                                    <span className="text-white font-semibold">
+                                      {entry.participantName}
+                                    </span>{" "}
+                                    has paid.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel
+                                    className="border-white/20 text-white/70 hover:bg-white/10"
+                                    data-ocid="admin.payments.mark_paid.cancel_button"
+                                  >
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleConfirmPayment(entryId, rowNum)
+                                    }
+                                    className="bg-emerald/80 hover:bg-emerald text-navy font-black"
+                                    data-ocid={`admin.payments.mark_paid.confirm_button.${rowNum}`}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Yes, Mark Paid
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
 
                           {/* Delete Entry */}
