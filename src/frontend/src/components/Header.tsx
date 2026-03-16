@@ -20,6 +20,20 @@ export default function Header() {
     return currentPath.startsWith(href);
   };
 
+  const getLinkClass = (href: string, mobile = false) => {
+    const active = isActive(href);
+
+    if (mobile) {
+      return active
+        ? "block px-4 py-2 rounded-md text-sm font-semibold bg-gold/20 text-gold transition-all"
+        : "block px-4 py-2 rounded-md text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-all";
+    }
+
+    return active
+      ? "px-4 py-2 rounded-md text-sm font-semibold bg-white/10 text-white transition-all"
+      : "px-4 py-2 rounded-md text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-all";
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-navy border-b border-gold/20 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,17 +58,13 @@ export default function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
                 data-ocid={`nav.${link.label.toLowerCase()}.link`}
-                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
-                  isActive(link.href)
-                    ? "bg-gold text-navy"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
-                }`}
+                className={getLinkClass(link.href)}
               >
                 {link.label}
               </Link>
@@ -86,11 +96,7 @@ export default function Header() {
               to={link.href}
               onClick={() => setMobileOpen(false)}
               data-ocid={`nav.mobile.${link.label.toLowerCase()}.link`}
-              className={`block px-4 py-2 rounded-md text-sm font-semibold transition-all ${
-                isActive(link.href)
-                  ? "bg-gold text-navy"
-                  : "text-white/80 hover:text-white hover:bg-white/10"
-              }`}
+              className={getLinkClass(link.href, true)}
             >
               {link.label}
             </Link>

@@ -174,22 +174,20 @@ export default function Leaderboard() {
                 const entryIdStr = entryId.toString();
 
                 return (
-                  <div
+                  <Link
                     key={entryIdStr}
-                    className={`flex items-center gap-4 px-6 py-4 transition-colors hover:bg-white/5 ${
+                    to="/entry/$entryId"
+                    params={{ entryId: entryIdStr }}
+                    className={`flex items-center gap-4 px-6 py-4 transition-colors hover:bg-white/5 cursor-pointer block ${
                       isEliminated ? "opacity-50" : ""
                     } ${rank === 1 ? "bg-gold/5" : ""}`}
                   >
                     <RankBadge rank={rank} />
 
                     <div className="flex-1 min-w-0">
-                      <Link
-                        to="/entry/$entryId"
-                        params={{ entryId: entryIdStr }}
-                        className="text-white font-bold hover:text-gold transition-colors truncate block"
-                      >
+                      <span className="text-white font-bold hover:text-gold transition-colors truncate block">
                         {entry.participantName}
-                      </Link>
+                      </span>
                       <div className="flex items-center gap-2 mt-0.5">
                         {isEliminated ? (
                           <Badge
@@ -218,7 +216,7 @@ export default function Leaderboard() {
                         pts
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

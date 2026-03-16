@@ -42,16 +42,18 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+        {/* Background image layer — sits behind everything */}
+        <div className="absolute inset-0 z-0">
           <img
             src="/assets/generated/hero-banner.dim_1400x500.png"
             alt="NCAA Tournament Bracket"
             className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-navy/70 via-navy/60 to-navy" />
+          <div className="absolute inset-0 bg-gradient-to-b from-navy/80 via-navy/70 to-navy" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36 text-center">
+        {/* Text content — always on top of the image */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36 text-center">
           <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/40 rounded-full px-4 py-1.5 mb-6">
             <Star className="w-4 h-4 text-gold fill-gold" />
             <span className="text-gold text-sm font-bold tracking-wide uppercase">
@@ -59,13 +61,13 @@ export default function Home() {
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tight mb-4">
+          <h1 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight mb-4">
             SURVIVOR
             <br />
             <span className="text-gold">BRACKET</span>
           </h1>
 
-          <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             Pick one team per seed. Earn points from every game they play. Keep
             your teams alive to keep scoring. The most points wins.
           </p>
@@ -82,9 +84,8 @@ export default function Home() {
             </Button>
             <Button
               asChild
-              variant="outline"
               size="lg"
-              className="border-white/30 text-white hover:bg-white/10 font-bold text-lg px-8 py-6 rounded-xl"
+              className="bg-gold hover:bg-gold/90 text-navy font-black text-lg px-8 py-6 rounded-xl shadow-xl shadow-gold/20 hover:shadow-gold/40 transition-all hover:scale-105"
             >
               <Link to="/leaderboard">
                 <Trophy className="w-5 h-5 mr-2" />
@@ -216,9 +217,8 @@ export default function Home() {
             </Button>
             <Button
               asChild
-              variant="outline"
               size="lg"
-              className="border-gold/30 text-gold hover:bg-gold/10 font-bold text-lg px-8 py-6 rounded-xl"
+              className="bg-gold hover:bg-gold/90 text-navy font-black text-lg px-8 py-6 rounded-xl shadow-xl shadow-gold/20"
             >
               <Link to="/leaderboard">View Standings</Link>
             </Button>

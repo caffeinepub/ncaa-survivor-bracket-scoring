@@ -289,7 +289,7 @@ export default function EntryForm() {
                 onChange={(e) => setParticipantName(e.target.value)}
                 placeholder="Enter your name..."
                 disabled={!isRegistrationOpen}
-                className="bg-navy/50 border-white/20 text-white placeholder:text-white/30 focus:border-gold focus:ring-gold/20 text-base"
+                className="bg-white border-white/20 text-black placeholder:text-black/40 focus:border-gold focus:ring-gold/20 text-base"
               />
             </div>
             <div>
@@ -306,7 +306,7 @@ export default function EntryForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 disabled={!isRegistrationOpen}
-                className="bg-navy/50 border-white/20 text-white placeholder:text-white/30 focus:border-gold focus:ring-gold/20 text-base"
+                className="bg-white border-white/20 text-black placeholder:text-black/40 focus:border-gold focus:ring-gold/20 text-base"
               />
             </div>
           </CardContent>
