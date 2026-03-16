@@ -61,10 +61,9 @@ export default function Home() {
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight mb-4">
-            SURVIVOR
-            <br />
-            <span className="text-gold">BRACKET</span>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-4">
+            <span className="block mb-6">SURVIVOR</span>
+            <span className="block text-gold">BRACKET</span>
           </h1>
 
           <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
