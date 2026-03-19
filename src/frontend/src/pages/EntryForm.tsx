@@ -16,8 +16,10 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronDown,
+  Clock,
   DollarSign,
   Loader2,
+  Lock,
   Mail,
   User,
 } from "lucide-react";
@@ -33,6 +35,9 @@ import {
 
 const SEEDS = Array.from({ length: 16 }, (_, i) => i + 1);
 
+// Deadline: March 19 2026, 11:00 AM Central Time = 17:00 UTC
+const DEADLINE_MS = new Date("2026-03-19T17:00:00Z").getTime();
+
 const STEPS = [
   {
     num: 1,
@@ -41,7 +46,7 @@ const STEPS = [
   },
   {
     num: 2,
-    text: "Pick one team per seed number (seeds 1–16).",
+    text: "Pick one team per seed number (seeds 1\u201316).",
     highlight: false,
   },
   {
@@ -51,7 +56,7 @@ const STEPS = [
   },
   {
     num: 4,
-    text: null, // rendered separately for PayPal highlight
+    text: null,
     highlight: true,
   },
 ];
@@ -70,6 +75,8 @@ export default function EntryForm() {
 
   const registerEntry = useRegisterEntry();
 
+  const deadlinePassed = Date.now() >= DEADLINE_MS;
+
   useEffect(() => {
     const currentPhase = getLocalPhase();
     setPhase(currentPhase);
@@ -81,7 +88,7 @@ export default function EntryForm() {
     setTeamsBySeed(seedMap);
   }, []);
 
-  const isRegistrationOpen = phase === "registration";
+  const isRegistrationOpen = phase === "registration" && !deadlinePassed;
   const allPicksFilled = SEEDS.every((seed) => picks[seed] != null);
   const canSubmit =
     participantName.trim().length > 0 && allPicksFilled && isRegistrationOpen;
@@ -136,21 +143,45 @@ export default function EntryForm() {
               Entry #{submittedEntryId.toString()} has been recorded.
             </p>
 
-            {/* PayPal reminder after submission */}
+            {/* Payment reminder after submission */}
             <div className="bg-gold/10 rounded-xl border-2 border-gold/60 p-4 mb-8 text-left">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 <DollarSign className="w-4 h-4 text-gold" />
                 <span className="text-gold font-black text-sm uppercase tracking-wider">
                   Don't forget to pay!
                 </span>
               </div>
-              <p className="text-white/80 text-sm">
+              <p className="text-white/80 text-sm mb-3">
                 Send <span className="text-gold font-black">$5 per entry</span>{" "}
-                via PayPal to{" "}
+                using one of the options below.{" "}
                 <span className="text-gold font-bold">
-                  klandrum21@gmail.com
-                </span>{" "}
-                to confirm your spot.
+                  Include your entry name in the payment note.
+                </span>
+              </p>
+              <div className="space-y-2">
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                  <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">
+                    PayPal
+                  </span>
+                  <p className="text-gold font-bold text-sm">
+                    klandrum21@gmail.com
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                  <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">
+                    Venmo
+                  </span>
+                  <p className="text-gold font-bold text-sm">
+                    @Kevin-Landrum-11 &nbsp;
+                    <span className="text-white/40 font-normal text-xs">
+                      (last 4: 9037)
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <p className="text-white/40 text-xs mt-3">
+                Questions? Contact{" "}
+                <span className="text-gold">klandrum21@gmail.com</span>
               </p>
             </div>
 
@@ -163,7 +194,7 @@ export default function EntryForm() {
                   <div key={seed} className="flex items-center gap-2 py-1">
                     <SeedBadge seed={seed} size="sm" />
                     <span className="text-white/80 text-sm font-semibold truncate">
-                      {picks[seed]?.name || "—"}
+                      {picks[seed]?.name || "\u2014"}
                     </span>
                   </div>
                 ))}
@@ -199,13 +230,29 @@ export default function EntryForm() {
           MAKE YOUR <span className="text-gold">PICKS</span>
         </h1>
         <p className="text-white/70">
-          Select one team per seed (1–16) to build your survivor bracket.
+          Select one team per seed (1\u201316) to build your survivor bracket.
         </p>
         <p className="text-white/80 text-sm mt-3 font-semibold">
           Entry fee: <span className="text-gold font-black">$5 per entry</span>{" "}
-          — multiple entries allowed.
+          \u2014 multiple entries allowed.
         </p>
       </div>
+
+      {/* Deadline Locked Banner */}
+      {deadlinePassed && (
+        <div className="mb-8 flex items-center gap-3 bg-red-900/30 border border-red-500/40 rounded-2xl px-6 py-4">
+          <Lock className="w-5 h-5 text-red-400 shrink-0" />
+          <div>
+            <p className="text-red-300 font-black text-sm uppercase tracking-wider">
+              Picks Are Locked
+            </p>
+            <p className="text-white/50 text-xs mt-0.5">
+              The entry deadline of March 19th at 11 am Central has passed. No
+              new entries are being accepted.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* How to Enter Steps Card */}
       <Card
@@ -233,35 +280,59 @@ export default function EntryForm() {
             </div>
           ))}
 
-          {/* Step 4 — PayPal highlight */}
+          {/* Step 4 — Payment highlight */}
           <div className="flex items-start gap-3 rounded-xl border-2 border-gold/70 bg-gold/10 px-4 py-3 mt-1">
             <span className="w-7 h-7 rounded-full bg-gold text-navy text-sm font-black flex items-center justify-center shrink-0 mt-0.5">
               4
             </span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-gold font-black text-sm">
-                  Pay Entry Fee via PayPal
+                  Pay Entry Fee
                 </span>
                 <Badge className="bg-gold text-navy text-[10px] font-black uppercase tracking-wide px-2 py-0.5">
                   Required
                 </Badge>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed">
+              <p className="text-white/80 text-sm leading-relaxed mb-3">
                 Send <span className="text-gold font-black">$5 per entry</span>{" "}
-                to{" "}
-                <span className="text-gold font-black">
-                  klandrum21@gmail.com
-                </span>{" "}
-                via PayPal to confirm your spot in the contest.
+                via one of the options below.{" "}
+                <span className="text-gold font-semibold">
+                  Include your entry name in the payment note.
+                </span>
+              </p>
+              <div className="space-y-2">
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                  <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">
+                    PayPal
+                  </span>
+                  <p className="text-gold font-bold text-sm">
+                    klandrum21@gmail.com
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg px-3 py-2">
+                  <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">
+                    Venmo
+                  </span>
+                  <p className="text-gold font-bold text-sm">
+                    @Kevin-Landrum-11 &nbsp;
+                    <span className="text-white/40 font-normal text-xs">
+                      (last 4: 9037)
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <p className="text-white/40 text-xs mt-3">
+                Questions? Contact{" "}
+                <span className="text-gold">klandrum21@gmail.com</span>
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Phase Warning */}
-      {!isRegistrationOpen && (
+      {/* Phase Warning (non-deadline) */}
+      {!isRegistrationOpen && !deadlinePassed && (
         <Alert className="mb-6 bg-destructive/10 border-destructive/40">
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="text-destructive font-semibold">
@@ -392,26 +463,33 @@ export default function EntryForm() {
 
         {/* Submit */}
         <div className="flex flex-col items-center gap-3">
-          {!allPicksFilled && participantName.trim() && (
+          {!deadlinePassed && !allPicksFilled && participantName.trim() && (
             <p className="text-white/40 text-sm">
               Fill all 16 seed picks to submit your entry.
             </p>
           )}
-          <Button
-            type="submit"
-            disabled={!canSubmit || registerEntry.isPending}
-            size="lg"
-            className="bg-gold hover:bg-gold/90 text-navy font-black text-lg px-10 py-6 rounded-xl w-full sm:w-auto disabled:opacity-40"
-          >
-            {registerEntry.isPending ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              "Submit Entry"
-            )}
-          </Button>
+          {deadlinePassed ? (
+            <div className="flex items-center gap-2 text-white/40 text-sm">
+              <Clock className="w-4 h-4" />
+              Entry deadline has passed. No new entries accepted.
+            </div>
+          ) : (
+            <Button
+              type="submit"
+              disabled={!canSubmit || registerEntry.isPending}
+              size="lg"
+              className="bg-yellow-400 hover:bg-yellow-300 text-navy font-black text-lg px-10 py-6 rounded-xl w-full sm:w-auto disabled:opacity-40"
+            >
+              {registerEntry.isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Entry"
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </div>

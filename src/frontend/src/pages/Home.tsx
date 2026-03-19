@@ -3,12 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import {
   ChevronRight,
+  Clock,
   Star,
   Target,
   TrendingUp,
   Trophy,
   Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import SeedBadge from "../components/SeedBadge";
 
 const HOW_IT_WORKS = [
@@ -23,7 +25,7 @@ const HOW_IT_WORKS = [
     icon: TrendingUp,
     title: "Earn Points From Every Game",
     description:
-      "Your teams earn points equal to the actual points they score in each game — win or lose. A team that scores 80 points earns you 80 points, even in a loss.",
+      "Your teams earn points equal to the actual points they score in each game \u2014 win or lose. A team that scores 80 points earns you 80 points, even in a loss.",
     color: "text-emerald",
   },
   {
@@ -37,12 +39,53 @@ const HOW_IT_WORKS = [
 
 const EXAMPLE_SEEDS = [1, 4, 8, 12, 16];
 
+// Deadline: Thursday March 19 2026, 11:00 AM Central Time (UTC-6 in March)
+const DEADLINE_MS = new Date("2026-03-19T17:00:00Z").getTime(); // 11am CT = 17:00 UTC
+
+function calcTimeLeft() {
+  const diff = DEADLINE_MS - Date.now();
+  if (diff <= 0)
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return { days, hours, minutes, seconds, expired: false };
+}
+
+function useCountdown() {
+  const [time, setTime] = useState(calcTimeLeft);
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(calcTimeLeft()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return time;
+}
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="bg-navy-card border border-gold/30 rounded-xl px-4 py-3 min-w-[64px] text-center">
+        <span className="text-3xl md:text-4xl font-black text-gold tabular-nums">
+          {String(value).padStart(2, "0")}
+        </span>
+      </div>
+      <span className="text-white/50 text-xs font-bold uppercase tracking-widest mt-2">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function Home() {
+  const countdown = useCountdown();
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        {/* Text content — always on top of the image */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36 text-center">
           <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/40 rounded-full px-4 py-1.5 mb-6">
             <Star className="w-4 h-4 text-gold fill-gold" />
@@ -61,16 +104,51 @@ export default function Home() {
             your teams alive to keep scoring. The most points wins.
           </p>
 
+          {/* Countdown */}
+          {!countdown.expired ? (
+            <div className="mb-10">
+              <div className="flex flex-col items-center mb-4 gap-1">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gold" />
+                  <span className="text-white font-black text-lg tracking-wide">
+                    March 19th
+                  </span>
+                </div>
+                <span className="text-white/70 text-sm font-semibold tracking-widest uppercase">
+                  11 am Central
+                </span>
+              </div>
+              <div className="flex items-center justify-center gap-3 md:gap-5">
+                <CountdownUnit value={countdown.days} label="Days" />
+                <span className="text-gold text-3xl font-black pb-6">:</span>
+                <CountdownUnit value={countdown.hours} label="Hours" />
+                <span className="text-gold text-3xl font-black pb-6">:</span>
+                <CountdownUnit value={countdown.minutes} label="Min" />
+                <span className="text-gold text-3xl font-black pb-6">:</span>
+                <CountdownUnit value={countdown.seconds} label="Sec" />
+              </div>
+            </div>
+          ) : (
+            <div className="mb-10 inline-flex items-center gap-2 bg-red-900/40 border border-red-500/40 rounded-full px-5 py-2">
+              <Clock className="w-4 h-4 text-red-400" />
+              <span className="text-red-300 text-sm font-bold uppercase tracking-widest">
+                Picks Are Locked
+              </span>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              asChild
-              size="lg"
-              className="bg-gold hover:bg-gold/90 text-navy font-black text-lg px-8 py-6 rounded-xl shadow-xl shadow-gold/20 hover:shadow-gold/40 transition-all hover:scale-105"
-            >
-              <Link to="/enter">
-                Enter Now <ChevronRight className="w-5 h-5 ml-1" />
-              </Link>
-            </Button>
+            {!countdown.expired && (
+              <Button
+                asChild
+                size="lg"
+                className="bg-gold hover:bg-gold/90 text-navy font-black text-lg px-8 py-6 rounded-xl shadow-xl shadow-gold/20 hover:shadow-gold/40 transition-all hover:scale-105"
+              >
+                <Link to="/enter">
+                  Enter Now <ChevronRight className="w-5 h-5 ml-1" />
+                </Link>
+              </Button>
+            )}
             <Button
               asChild
               size="lg"
@@ -137,8 +215,8 @@ export default function Home() {
               <p className="text-white/60 text-lg leading-relaxed mb-6">
                 The NCAA tournament features seeds 1 through 16. You must pick
                 exactly one team for each seed slot. Higher seeds are favorites,
-                but upsets happen — and every point scored counts toward your
-                total.
+                but upsets happen \u2014 and every point scored counts toward
+                your total.
               </p>
               <p className="text-white/60 leading-relaxed mb-8">
                 A #16 seed that pulls off a massive upset and scores 75 points
@@ -170,7 +248,7 @@ export default function Home() {
                       <div className="h-3 bg-white/10 rounded-full w-32" />
                     </div>
                     <div className="text-white/30 text-xs font-semibold">
-                      Pick a team →
+                      Pick a team \u2192
                     </div>
                   </div>
                 ))}

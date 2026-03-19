@@ -51,15 +51,16 @@ export enum Variant_active_eliminated {
 }
 export interface backendInterface {
     addTeam(name: string, seed: bigint): Promise<bigint>;
+    batchUpdateTeamScores(updates: Array<[string, bigint, boolean]>): Promise<void>;
     confirmPayment(entryId: bigint): Promise<void>;
     deleteEntry(entryId: bigint): Promise<void>;
-    fetchAndSyncScores(): Promise<string>;
+    fetchAndSyncScores(date: string): Promise<string>;
     getEntry(entryId: bigint): Promise<Entry>;
     getLeaderboard(): Promise<Array<[bigint, Entry]>>;
     getTeams(): Promise<Array<Team>>;
     registerEntry(participantName: string, email: string, picks: Array<[bigint, bigint]>): Promise<bigint>;
+    resetTeamScores(): Promise<void>;
     seedTeamsFromBracket(): Promise<bigint>;
-    seedTestData2025(): Promise<string>;
     setTournamentPhase(phase: TournamentPhase): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unconfirmPayment(entryId: bigint): Promise<void>;

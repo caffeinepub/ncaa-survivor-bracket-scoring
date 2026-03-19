@@ -1,23 +1,25 @@
 # NCAA Survivor Bracket Scoring
 
 ## Current State
-Admin panel has a Payments tab showing all entries with name, email, payment status badge, and Mark Paid/Mark Unpaid buttons.
+The app has a `fetchAndSyncScores()` backend function that calls `data.ncaa.com/casablanca/scoreboard/basketball-men/d1/scoreboard.json` (no date parameter). This URL returns 404. The function returns raw JSON text but never parses it or updates team points/statuses. Team scores are never actually applied.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `deleteEntry(entryId: Nat)` backend function.
-- `useDeleteEntry` mutation hook.
-- Delete button per entry row in Payments tab with AlertDialog confirmation.
+- `fetchAndSyncScores(date: Text)` now accepts a date string (YYYY/MM/DD) and uses the working proxy `https://ncaa-api.henrygd.me/scoreboard/basketball-men/d1/YYYY/MM/DD`
+- New backend function `resetTeamScores()` — resets all teams to points=0 and status=#active
+- New backend function `batchUpdateTeamScores(updates: [(Text, Nat, Bool)])` — accepts array of (teamShortName, totalPointsScored, isEliminated), matches by team name (case-insensitive fuzzy), updates team points and status
+- Frontend sync logic: fetches all tournament dates from March 18 through today, parses each date's game JSON, accumulates per-team points from final games, then calls resetTeamScores + batchUpdateTeamScores
 
 ### Modify
-- Admin.tsx Payments tab: add delete button with confirm dialog.
+- `fetchAndSyncScores` signature: now takes a `date: Text` param and returns the raw JSON for that date
+- Admin sync button: now triggers multi-date fetch + parse + batch update flow
 
 ### Remove
-- Nothing.
+- Old hardcoded URL with no date in `fetchAndSyncScores`
 
 ## Implementation Plan
-1. Add deleteEntry to main.mo.
-2. Add deleteEntry to backend.d.ts.
-3. Add useDeleteEntry hook to useQueries.ts.
-4. Add delete button with AlertDialog to each entry row in Admin.tsx.
+1. Update Motoko backend: change `fetchAndSyncScores` to accept a date string, use correct URL. Add `resetTeamScores()` and `batchUpdateTeamScores(updates: [(Text, Nat, Bool)])` functions.
+2. Regenerate IDL/bindings.
+3. Update frontend Admin page: on Sync Scores click, loop through tournament dates (Mar 18 through today), call `fetchAndSyncScores(date)` for each, parse JSON response, accumulate team scores from final games, call `resetTeamScores` then `batchUpdateTeamScores`.
+4. Match API team short names (e.g. "TCU", "Ohio St.", "Saint Mary's (CA)") to stored team names using normalized comparison.

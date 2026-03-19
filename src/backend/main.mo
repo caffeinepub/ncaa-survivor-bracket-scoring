@@ -1,11 +1,15 @@
 import List "mo:core/List";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
+import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
+import Text "mo:core/Text";
 import OutCall "http-outcalls/outcall";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   type Team = {
     id : Nat;
@@ -123,17 +127,6 @@ actor {
     };
   };
 
-  public shared ({ caller }) func fetchAndSyncScores() : async Text {
-    await OutCall.httpGetRequest("https://data.ncaa.com/casablanca/scoreboard/basketball-men/d1/scoreboard.json", [], transform);
-  };
-
-  public query ({ caller }) func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
-    OutCall.transform(input);
-  };
-
-  // 2026 NCAA Men's Tournament — all 68 teams from ncaa.com
-  // Seeds 11 and 16 have 6 teams each (2 First Four play-in matchups per seed).
-  // Source: https://www.ncaa.com/brackets/basketball-men/d1/2026
   let hardcodedTeams = List.fromArray<(Text, Nat)>([
     ("Duke", 1),          ("Arizona", 1),        ("Florida", 1),       ("Michigan", 1),
     ("UConn", 2),         ("Purdue", 2),          ("Houston", 2),       ("Iowa St.", 2),
@@ -170,5 +163,118 @@ actor {
       loadedTeams += 1;
     };
     loadedTeams;
+  };
+
+  //-----------------------------------------
+  // CONST - Points Per Round
+  //-----------------------------------------
+  let ROUND_POINTS = [
+    1,  // First Four
+    2,  // First Round
+    4,  // Second Round
+    8,  // Sweet 16
+    12, // Elite Eight
+    16, // Final Four
+    32, // Championship
+  ];
+
+  //-----------------------------------------
+  // Reset Team Scores and Recalculate Entries from Scratch
+  //-----------------------------------------
+  public shared ({ caller }) func resetTeamScores() : async () {
+    // Reset all teams' points and status
+    let teamIter = teams.entries();
+    teams.clear();
+    for ((id, team) in teamIter) {
+      teams.add(id, { team with points = 0; status = #active });
+    };
+
+    // Recalculate all entries' totalPoints and activeTeams
+    let entryIter = entries.entries();
+    entries.clear();
+    for ((id, entry) in entryIter) {
+      var totalPoints = 0;
+      var activeTeams = 0;
+
+      for ((_, teamId) in entry.picks.values()) {
+        switch (teams.get(teamId)) {
+          case (null) {};
+          case (?team) {
+            totalPoints += team.points;
+            if (team.status == #active) { activeTeams += 1 };
+          };
+        };
+      };
+
+      entries.add(
+        id,
+        {
+          entry with
+          totalPoints;
+          activeTeams;
+        },
+      );
+    };
+  };
+
+  //-----------------------------------------
+  // Batch Update Team Scores
+  //-----------------------------------------
+  public shared ({ caller }) func batchUpdateTeamScores(updates : [(Text, Nat, Bool)]) : async () {
+    // Update each team based on provided updates array
+    for ((teamName, pointsScored, isEliminated) in updates.values()) {
+      let teamIter = teams.values();
+      for (team in teamIter) {
+        if (Text.equal(team.name, teamName)) {
+          teams.add(
+            team.id,
+            {
+              team with
+              points = pointsScored;
+              status = if (isEliminated) { #eliminated } else { #active };
+            },
+          );
+        };
+      };
+    };
+
+    // Recalculate all entries' totalPoints and activeTeams
+    let entryIter = entries.entries();
+    entries.clear();
+    for ((id, entry) in entryIter) {
+      var totalPoints = 0;
+      var activeTeams = 0;
+
+      for ((_, teamId) in entry.picks.values()) {
+        switch (teams.get(teamId)) {
+          case (null) {};
+          case (?team) {
+            totalPoints += team.points;
+            if (team.status == #active) { activeTeams += 1 };
+          };
+        };
+      };
+
+      entries.add(
+        id,
+        {
+          entry with
+          totalPoints;
+          activeTeams;
+        },
+      );
+    };
+  };
+
+  //-----------------------------------------
+  // Fetch and Sync Scores (External API)
+  //-----------------------------------------
+  public shared ({ caller }) func fetchAndSyncScores(date : Text) : async Text {
+    let url = "https://ncaa-api.henrygd.me/scoreboard/basketball-men/d1/" # date;
+    await OutCall.httpGetRequest(url, [], transform);
+  };
+
+  public query ({ caller }) func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
+    OutCall.transform(input);
   };
 };

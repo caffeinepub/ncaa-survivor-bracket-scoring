@@ -133,15 +133,16 @@ export enum Variant_active_eliminated {
 }
 export interface backendInterface {
     addTeam(name: string, seed: bigint): Promise<bigint>;
+    batchUpdateTeamScores(updates: Array<[string, bigint, boolean]>): Promise<void>;
     confirmPayment(entryId: bigint): Promise<void>;
     deleteEntry(entryId: bigint): Promise<void>;
-    fetchAndSyncScores(): Promise<string>;
+    fetchAndSyncScores(date: string): Promise<string>;
     getEntry(entryId: bigint): Promise<Entry>;
     getLeaderboard(): Promise<Array<[bigint, Entry]>>;
     getTeams(): Promise<Array<Team>>;
     registerEntry(participantName: string, email: string, picks: Array<[bigint, bigint]>): Promise<bigint>;
+    resetTeamScores(): Promise<void>;
     seedTeamsFromBracket(): Promise<bigint>;
-    seedTestData2025(): Promise<string>;
     setTournamentPhase(phase: TournamentPhase): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unconfirmPayment(entryId: bigint): Promise<void>;
@@ -160,6 +161,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.addTeam(arg0, arg1);
+            return result;
+        }
+    }
+    async batchUpdateTeamScores(arg0: Array<[string, bigint, boolean]>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.batchUpdateTeamScores(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.batchUpdateTeamScores(arg0);
             return result;
         }
     }
@@ -191,17 +206,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async fetchAndSyncScores(): Promise<string> {
+    async fetchAndSyncScores(arg0: string): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.fetchAndSyncScores();
+                const result = await this.actor.fetchAndSyncScores(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.fetchAndSyncScores();
+            const result = await this.actor.fetchAndSyncScores(arg0);
             return result;
         }
     }
@@ -261,6 +276,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async resetTeamScores(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.resetTeamScores();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.resetTeamScores();
+            return result;
+        }
+    }
     async seedTeamsFromBracket(): Promise<bigint> {
         if (this.processError) {
             try {
@@ -272,20 +301,6 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.seedTeamsFromBracket();
-            return result;
-        }
-    }
-    async seedTestData2025(): Promise<string> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.seedTestData2025();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.seedTestData2025();
             return result;
         }
     }

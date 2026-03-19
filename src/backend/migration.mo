@@ -1,8 +1,9 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
+import Set "mo:core/Set";
+import List "mo:core/List";
 
 module {
-  // Old types (without email and paymentConfirmed)
   type Team = {
     id : Nat;
     name : Text;
@@ -13,22 +14,6 @@ module {
 
   type Entry = {
     participantName : Text;
-    picks : [(Nat, Nat)];
-    totalPoints : Nat;
-    activeTeams : Nat;
-  };
-
-  type OldActor = {
-    nextTeamId : Nat;
-    nextEntryId : Nat;
-    teams : Map.Map<Nat, Team>;
-    entries : Map.Map<Nat, Entry>;
-    tournamentPhase : { #registration; #inProgress; #complete };
-  };
-
-  // New types (with email and paymentConfirmed)
-  type NewEntry = {
-    participantName : Text;
     email : Text;
     picks : [(Nat, Nat)];
     totalPoints : Nat;
@@ -36,27 +21,27 @@ module {
     paymentConfirmed : Bool;
   };
 
-  type NewActor = {
+  type TournamentPhase = { #registration; #inProgress; #complete };
+
+  type OldActor = {
+    teams : Map.Map<Nat, Team>;
+    entries : Map.Map<Nat, Entry>;
     nextTeamId : Nat;
     nextEntryId : Nat;
+    tournamentPhase : TournamentPhase;
+    hardcodedTeams : List.List<(Text, Nat)>;
+  };
+
+  type NewActor = {
     teams : Map.Map<Nat, Team>;
-    entries : Map.Map<Nat, NewEntry>;
-    tournamentPhase : { #registration; #inProgress; #complete };
+    entries : Map.Map<Nat, Entry>;
+    nextTeamId : Nat;
+    nextEntryId : Nat;
+    tournamentPhase : TournamentPhase;
+    hardcodedTeams : List.List<(Text, Nat)>;
   };
 
   public func run(old : OldActor) : NewActor {
-    let newEntries = old.entries.map<Nat, Entry, NewEntry>(
-      func(_id, oldEntry) {
-        {
-          oldEntry with
-          email = "";
-          paymentConfirmed = false;
-        };
-      }
-    );
-    {
-      old with
-      entries = newEntries;
-    };
+    old;
   };
 };

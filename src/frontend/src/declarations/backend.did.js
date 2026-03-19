@@ -49,9 +49,14 @@ export const TransformationOutput = IDL.Record({
 
 export const idlService = IDL.Service({
   'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
+  'batchUpdateTeamScores' : IDL.Func(
+      [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat, IDL.Bool))],
+      [],
+      [],
+    ),
   'confirmPayment' : IDL.Func([IDL.Nat], [], []),
   'deleteEntry' : IDL.Func([IDL.Nat], [], []),
-  'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
+  'fetchAndSyncScores' : IDL.Func([IDL.Text], [IDL.Text], []),
   'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
   'getLeaderboard' : IDL.Func(
       [],
@@ -64,8 +69,8 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'resetTeamScores' : IDL.Func([], [], []),
   'seedTeamsFromBracket' : IDL.Func([], [IDL.Nat], []),
-  'seedTestData2025' : IDL.Func([], [IDL.Text], []),
   'setTournamentPhase' : IDL.Func([TournamentPhase], [], []),
   'transform' : IDL.Func(
       [TransformationInput],
@@ -116,9 +121,14 @@ export const idlFactory = ({ IDL }) => {
   
   return IDL.Service({
     'addTeam' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], []),
+    'batchUpdateTeamScores' : IDL.Func(
+        [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat, IDL.Bool))],
+        [],
+        [],
+      ),
     'confirmPayment' : IDL.Func([IDL.Nat], [], []),
     'deleteEntry' : IDL.Func([IDL.Nat], [], []),
-    'fetchAndSyncScores' : IDL.Func([], [IDL.Text], []),
+    'fetchAndSyncScores' : IDL.Func([IDL.Text], [IDL.Text], []),
     'getEntry' : IDL.Func([IDL.Nat], [Entry], ['query']),
     'getLeaderboard' : IDL.Func(
         [],
@@ -131,8 +141,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
+    'resetTeamScores' : IDL.Func([], [], []),
     'seedTeamsFromBracket' : IDL.Func([], [IDL.Nat], []),
-    'seedTestData2025' : IDL.Func([], [IDL.Text], []),
     'setTournamentPhase' : IDL.Func([TournamentPhase], [], []),
     'transform' : IDL.Func(
         [TransformationInput],

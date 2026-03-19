@@ -46,9 +46,13 @@ export interface http_request_result {
 }
 export interface _SERVICE {
   'addTeam' : ActorMethod<[string, bigint], bigint>,
+  'batchUpdateTeamScores' : ActorMethod<
+    [Array<[string, bigint, boolean]>],
+    undefined
+  >,
   'confirmPayment' : ActorMethod<[bigint], undefined>,
   'deleteEntry' : ActorMethod<[bigint], undefined>,
-  'fetchAndSyncScores' : ActorMethod<[], string>,
+  'fetchAndSyncScores' : ActorMethod<[string], string>,
   'getEntry' : ActorMethod<[bigint], Entry>,
   'getLeaderboard' : ActorMethod<[], Array<[bigint, Entry]>>,
   'getTeams' : ActorMethod<[], Array<Team>>,
@@ -56,8 +60,8 @@ export interface _SERVICE {
     [string, string, Array<[bigint, bigint]>],
     bigint
   >,
+  'resetTeamScores' : ActorMethod<[], undefined>,
   'seedTeamsFromBracket' : ActorMethod<[], bigint>,
-  'seedTestData2025' : ActorMethod<[], string>,
   'setTournamentPhase' : ActorMethod<[TournamentPhase], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'unconfirmPayment' : ActorMethod<[bigint], undefined>,

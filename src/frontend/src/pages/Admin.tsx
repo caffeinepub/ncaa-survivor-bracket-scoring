@@ -54,6 +54,7 @@ import { TournamentPhase } from "../backend";
 import SeedBadge from "../components/SeedBadge";
 import { useActor } from "../hooks/useActor";
 import {
+  type SyncProgress,
   useAddTeam,
   useConfirmPayment,
   useDeleteEntry,
@@ -104,11 +105,12 @@ export default function Admin() {
   const [homeScore, setHomeScore] = useState("");
   const [awayScore, setAwayScore] = useState("");
   const [gameRound, setGameRound] = useState("1");
+  const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
   const { actor } = useActor();
   const addTeamMutation = useAddTeam();
   const setPhaseMutation = useSetTournamentPhase();
-  const syncScoresMutation = useFetchAndSyncScores();
+  const syncScoresMutation = useFetchAndSyncScores(setSyncProgress);
   const seedTeamsMutation = useSeedTeamsFromBracket();
   const confirmPaymentMutation = useConfirmPayment();
   const unconfirmPaymentMutation = useUnconfirmPayment();
@@ -214,10 +216,13 @@ export default function Admin() {
   };
 
   const handleSyncScores = async () => {
+    setSyncProgress(null);
     try {
       const result = await syncScoresMutation.mutateAsync();
-      toast.success(result || "Scores synced successfully!");
+      setSyncProgress({ stage: "done", updatedCount: result.updatedCount });
+      toast.success(result.message || "Scores synced successfully!");
     } catch (err: unknown) {
+      setSyncProgress(null);
       const message =
         err instanceof Error ? err.message : "Failed to sync scores";
       toast.error(message);
@@ -567,7 +572,11 @@ export default function Admin() {
                 {syncScoresMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Syncing…
+                    {syncProgress?.stage === "updating"
+                      ? `Updating ${syncProgress.teamCount ?? 0} teams…`
+                      : syncProgress?.stage === "fetching"
+                        ? `Fetching ${syncProgress.currentDate ?? ""}… (${syncProgress.dateIndex}/${syncProgress.totalDates})`
+                        : "Syncing…"}
                   </>
                 ) : (
                   <>
@@ -583,7 +592,7 @@ export default function Admin() {
                   data-ocid="admin.sync_scores.success_state"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  {syncScoresMutation.data || "Sync complete"}
+                  {syncScoresMutation.data?.message || "Sync complete"}
                 </div>
               )}
 
