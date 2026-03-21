@@ -7,9 +7,9 @@ import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
 import Text "mo:core/Text";
 import OutCall "http-outcalls/outcall";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   type Team = {
     id : Nat;

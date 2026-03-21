@@ -52,6 +52,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TournamentPhase } from "../backend";
 import SeedBadge from "../components/SeedBadge";
+import { useScoreSync } from "../context/ScoreSyncContext";
 import { useActor } from "../hooks/useActor";
 import {
   type SyncProgress,
@@ -75,6 +76,17 @@ import {
   setLocalPhase,
   setLocalTeams,
 } from "../lib/teamStore";
+
+function formatLastSynced(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  if (diffSecs < 60) return "just now";
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60)
+    return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  return `${diffHrs} hour${diffHrs !== 1 ? "s" : ""} ago`;
+}
 
 const SEEDS = Array.from({ length: 16 }, (_, i) => i + 1);
 
@@ -108,6 +120,7 @@ export default function Admin() {
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
 
   const { actor } = useActor();
+  const { lastSyncedAt, triggerSync } = useScoreSync();
   const addTeamMutation = useAddTeam();
   const setPhaseMutation = useSetTournamentPhase();
   const syncScoresMutation = useFetchAndSyncScores(setSyncProgress);
@@ -221,6 +234,7 @@ export default function Admin() {
       const result = await syncScoresMutation.mutateAsync();
       setSyncProgress({ stage: "done", updatedCount: result.updatedCount });
       toast.success(result.message || "Scores synced successfully!");
+      triggerSync();
     } catch (err: unknown) {
       setSyncProgress(null);
       const message =
@@ -604,6 +618,11 @@ export default function Admin() {
                   {syncScoresMutation.error instanceof Error
                     ? syncScoresMutation.error.message
                     : "Sync failed. Please try again."}
+                </p>
+              )}
+              {lastSyncedAt && (
+                <p className="text-white/40 text-xs ml-auto">
+                  Last synced: {formatLastSynced(lastSyncedAt)}
                 </p>
               )}
             </CardContent>

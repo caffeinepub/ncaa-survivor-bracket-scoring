@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useScoreSync } from "../context/ScoreSyncContext";
 import { useLeaderboard } from "../hooks/useQueries";
 
 function RankBadge({ rank }: { rank: number }) {
@@ -41,6 +42,17 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
+function formatLastSynced(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  if (diffSecs < 60) return "just now";
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60)
+    return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  return `${diffHrs} hour${diffHrs !== 1 ? "s" : ""} ago`;
+}
+
 export default function Leaderboard() {
   const {
     data: leaderboard,
@@ -50,6 +62,7 @@ export default function Leaderboard() {
     dataUpdatedAt,
   } = useLeaderboard();
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const { lastSyncedAt } = useScoreSync();
 
   useEffect(() => {
     if (dataUpdatedAt) {
@@ -80,8 +93,15 @@ export default function Leaderboard() {
           </h1>
           <p className="text-white/50 text-sm mt-1 flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
-            Last updated: {formatTime(lastRefresh)} · Auto-refreshes every 60s
+            Last updated: {formatTime(lastRefresh)} · Scores auto-sync every 15
+            min
           </p>
+          {lastSyncedAt && (
+            <p className="text-white/40 text-xs mt-0.5 flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" />
+              Scores last synced: {formatLastSynced(lastSyncedAt)}
+            </p>
+          )}
         </div>
         <Button
           onClick={handleRefresh}

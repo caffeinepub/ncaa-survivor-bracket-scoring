@@ -9,6 +9,7 @@ import {
 import { useEffect } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import { ScoreSyncProvider } from "./context/ScoreSyncContext";
 import { useActor } from "./hooks/useActor";
 import { getLocalTeams, setLocalTeams } from "./lib/teamStore";
 import Admin from "./pages/Admin";
@@ -45,25 +46,27 @@ function TeamAutoLoader() {
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen flex flex-col text-foreground relative">
-      {/* Persistent bracket background across all pages */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <img
-          src="/assets/generated/hero-banner.dim_1400x500.png"
-          alt=""
-          className="w-full h-full object-cover object-center"
-        />
+    <ScoreSyncProvider>
+      <div className="min-h-screen flex flex-col text-foreground relative">
+        {/* Persistent bracket background across all pages */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img
+            src="/assets/generated/hero-banner.dim_1400x500.png"
+            alt=""
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+          <Toaster richColors position="top-right" />
+          <TeamAutoLoader />
+        </div>
       </div>
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-        <Toaster richColors position="top-right" />
-        <TeamAutoLoader />
-      </div>
-    </div>
+    </ScoreSyncProvider>
   ),
 });
 
