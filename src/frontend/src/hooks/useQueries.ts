@@ -193,6 +193,20 @@ const NAME_MAP: Record<string, string> = {
   Oakland: "Oakland",
   "Queens (NC)": "Queens (N.C.)",
   Queens: "Queens (N.C.)",
+  "Queens (N.C.)": "Queens (N.C.)",
+  "Queens NC": "Queens (N.C.)",
+  "Queens-NC": "Queens (N.C.)",
+  "Queens Univ.": "Queens (N.C.)",
+  "Queens University": "Queens (N.C.)",
+  "Queens Univ. (NC)": "Queens (N.C.)",
+  "Queens Univ. (N.C.)": "Queens (N.C.)",
+  "Queens-Charlotte": "Queens (N.C.)",
+  "Queens Univ. Charlotte": "Queens (N.C.)",
+  UNI: "Northern Iowa",
+  "N. Iowa": "Northern Iowa",
+  "North. Iowa": "Northern Iowa",
+  "No. Iowa": "Northern Iowa",
+  "Northern Iowa": "Northern Iowa",
   "Robert Morris": "Robert Morris",
   Stetson: "Stetson",
   UMES: "Maryland-Eastern Shore",
@@ -207,7 +221,10 @@ const NAME_MAP: Record<string, string> = {
 };
 
 function normalizeTeamName(apiName: string): string {
-  return NAME_MAP[apiName] ?? apiName;
+  if (NAME_MAP[apiName]) return NAME_MAP[apiName];
+  // Fuzzy fallback: any "Queens" variant maps to Queens (N.C.)
+  if (apiName.toLowerCase().startsWith("queens")) return "Queens (N.C.)";
+  return apiName;
 }
 
 interface ApiGame {
@@ -300,7 +317,13 @@ export function useFetchAndSyncScores(
         const games = data.games ?? [];
         for (const g of games) {
           const { gameState, away, home } = g.game;
-          if (gameState !== "final") continue;
+          if (
+            !gameState ||
+            !["final", "f", "Final", "FINAL"].includes(
+              gameState.toLowerCase().trim(),
+            )
+          )
+            continue;
 
           const awayName = normalizeTeamName(away.names.short);
           const homeName = normalizeTeamName(home.names.short);

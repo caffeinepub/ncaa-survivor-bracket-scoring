@@ -30,12 +30,11 @@ actor {
 
   type TournamentPhase = { #registration; #inProgress; #complete };
 
-  var nextTeamId = 1;
-  var nextEntryId = 1;
-  let teams = Map.empty<Nat, Team>();
-  let entries = Map.empty<Nat, Entry>();
-
-  var tournamentPhase : TournamentPhase = #registration;
+  stable var nextTeamId = 1;
+  stable var nextEntryId = 1;
+  stable var teams = Map.empty<Nat, Team>();
+  stable var entries = Map.empty<Nat, Entry>();
+  stable var tournamentPhase : TournamentPhase = #registration;
 
   public shared ({ caller }) func addTeam(name : Text, seed : Nat) : async Nat {
     if (seed < 1 or seed > 16) {
