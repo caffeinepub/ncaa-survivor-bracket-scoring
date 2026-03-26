@@ -202,6 +202,9 @@ const NAME_MAP: Record<string, string> = {
   "Queens Univ. (N.C.)": "Queens (N.C.)",
   "Queens-Charlotte": "Queens (N.C.)",
   "Queens Univ. Charlotte": "Queens (N.C.)",
+  "Queens Univ. of Charlotte": "Queens (N.C.)",
+  "QU Charlotte": "Queens (N.C.)",
+  QUEENS: "Queens (N.C.)",
   UNI: "Northern Iowa",
   "N. Iowa": "Northern Iowa",
   "North. Iowa": "Northern Iowa",
@@ -220,18 +223,34 @@ const NAME_MAP: Record<string, string> = {
   "Montana St.": "Montana St.",
 };
 
-function normalizeTeamName(apiName: string): string {
-  if (NAME_MAP[apiName]) return NAME_MAP[apiName];
-  // Fuzzy fallback: any "Queens" variant maps to Queens (N.C.)
-  if (apiName.toLowerCase().startsWith("queens")) return "Queens (N.C.)";
-  return apiName;
+function normalizeTeamName(...candidates: string[]): string {
+  for (const name of candidates) {
+    if (!name) continue;
+    if (NAME_MAP[name]) return NAME_MAP[name];
+    if (name.toLowerCase().includes("queens")) return "Queens (N.C.)";
+    if (
+      name.toLowerCase().includes("northern iowa") ||
+      name.toLowerCase() === "uni"
+    )
+      return "Northern Iowa";
+  }
+  // Return first non-empty candidate as fallback
+  return candidates.find((c) => !!c) ?? candidates[0];
 }
 
 interface ApiGame {
   game: {
     gameState: string;
-    away: { score: string; names: { short: string }; winner: boolean };
-    home: { score: string; names: { short: string }; winner: boolean };
+    away: {
+      score: string;
+      names: { short: string; char6?: string; full?: string; seo?: string };
+      winner: boolean;
+    };
+    home: {
+      score: string;
+      names: { short: string; char6?: string; full?: string; seo?: string };
+      winner: boolean;
+    };
   };
 }
 
@@ -325,8 +344,18 @@ export function useFetchAndSyncScores(
           )
             continue;
 
-          const awayName = normalizeTeamName(away.names.short);
-          const homeName = normalizeTeamName(home.names.short);
+          const awayName = normalizeTeamName(
+            away.names.short,
+            away.names.char6 ?? "",
+            away.names.full ?? "",
+            away.names.seo ?? "",
+          );
+          const homeName = normalizeTeamName(
+            home.names.short,
+            home.names.char6 ?? "",
+            home.names.full ?? "",
+            home.names.seo ?? "",
+          );
           const awayPoints = Number.parseInt(away.score, 10) || 0;
           const homePoints = Number.parseInt(home.score, 10) || 0;
 
@@ -367,7 +396,9 @@ export function useFetchAndSyncScores(
 
       return {
         updatedCount: updates.length,
-        message: `Updated ${updates.length} team${updates.length !== 1 ? "s" : ""} from ${dates.length} date${dates.length !== 1 ? "s" : ""}`,
+        message: `Updated ${updates.length} team${
+          updates.length !== 1 ? "s" : ""
+        } from ${dates.length} date${dates.length !== 1 ? "s" : ""}`,
       };
     },
     onSuccess: () => {
