@@ -336,11 +336,10 @@ export function useFetchAndSyncScores(
         const games = data.games ?? [];
         for (const g of games) {
           const { gameState, away, home } = g.game;
+          const normalizedState = gameState?.toLowerCase().trim() ?? "";
           if (
             !gameState ||
-            !["final", "f", "Final", "FINAL"].includes(
-              gameState.toLowerCase().trim(),
-            )
+            !(normalizedState === "final" || normalizedState === "f")
           )
             continue;
 
@@ -387,12 +386,19 @@ export function useFetchAndSyncScores(
         updates.push([name, BigInt(points), isEliminated]);
       }
 
+      // CRITICAL: Only reset and update scores if we actually found game data.
+      // If teamScores is empty (API down, no games yet), do NOT wipe existing scores.
+      if (updates.length === 0) {
+        return {
+          updatedCount: 0,
+          message: "No completed games found. Existing scores unchanged.",
+        };
+      }
+
       onProgress?.({ stage: "updating", teamCount: updates.length });
 
       await actor.resetTeamScores();
-      if (updates.length > 0) {
-        await actor.batchUpdateTeamScores(updates);
-      }
+      await actor.batchUpdateTeamScores(updates);
 
       return {
         updatedCount: updates.length,
